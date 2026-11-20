@@ -11,30 +11,27 @@
       theme: {
         extend: {
           colors: {
-            gold: {
-              400: '#fbbf24',
-              500: '#f59e0b',
-              600: '#d97706'
-            }
+            gold: { 400: '#fbbf24', 500: '#f59e0b', 600: '#d97706' }
           }
         }
       }
     };
   </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
   <style>
-    body { font-family: 'Inter', sans-serif; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
     .mono { font-family: 'JetBrains Mono', monospace; }
     .card-3d {
-      transition: transform 0.25s ease, box-shadow 0.25s ease;
+      transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease, border-color 0.25s ease;
     }
     .card-3d:hover {
-      transform: translateY(-4px);
+      transform: translateY(-5px);
+      box-shadow: 0 20px 35px -15px rgba(245, 158, 11, 0.22);
     }
     @keyframes pulse-ring {
-      0% { transform: scale(0.95); opacity: 0.7; }
-      70% { transform: scale(1.12); opacity: 0; }
+      0% { transform: scale(0.95); opacity: 0.75; }
+      70% { transform: scale(1.15); opacity: 0; }
       100% { transform: scale(0.95); opacity: 0; }
     }
     .mining-pulse::before {
@@ -49,8 +46,25 @@
 </head>
 <body class="bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-slate-100 min-h-screen transition-colors duration-300">
 
-  <!-- Top Navigation Bar -->
-  <header class="sticky top-0 z-40 backdrop-blur-md bg-white/85 dark:bg-slate-900/85 border-b border-slate-200 dark:border-amber-500/20">
+  <!-- Top Market Ticker Strip -->
+  <div class="bg-slate-900 border-b border-amber-500/20 text-[11px] py-1.5 px-4 text-slate-300">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center gap-4">
+        <span class="flex items-center gap-1.5 font-semibold text-amber-400">
+          <i class="fa-solid fa-coins"></i> XAU/USD SPOT: <strong class="mono text-white" id="ticker-gold">$3,412.50</strong>
+        </span>
+        <span class="hidden sm:flex items-center gap-1.5 font-semibold text-orange-400">
+          <i class="fa-brands fa-bitcoin"></i> BTC/USDT: <strong class="mono text-white" id="ticker-btc">$94,850.00</strong>
+        </span>
+      </div>
+      <div class="flex items-center gap-3 text-emerald-400 font-semibold">
+        <span><i class="fa-solid fa-server mr-1"></i>Global Pool Hashrate: 482.6 PH/s</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Sticky Navigation Bar -->
+  <header class="sticky top-0 z-40 backdrop-blur-xl bg-white/85 dark:bg-slate-900/85 border-b border-slate-200 dark:border-amber-500/20">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-yellow-600 flex items-center justify-center text-slate-950 font-extrabold shadow-lg shadow-amber-500/25">
@@ -58,17 +72,26 @@
         </div>
         <div>
           <span class="font-extrabold tracking-tight text-lg bg-gradient-to-r from-amber-500 to-yellow-400 bg-clip-text text-transparent">GOLDENHASH</span>
-          <span class="hidden sm:inline-block ml-2 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/30">
-            <i class="fa-solid fa-circle text-[7px] mr-1 animate-pulse"></i>SHA-256 GOLD POOL LIVE
+          <span class="hidden md:inline-block ml-2 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/30">
+            <i class="fa-solid fa-circle text-[7px] mr-1 animate-pulse"></i>NODE ONLINE
           </span>
         </div>
       </div>
 
       <div class="flex items-center gap-3">
-        <!-- Public 6-Digit User ID Badge -->
-        <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-200/70 dark:bg-slate-800 text-xs font-medium">
-          <i class="fa-solid fa-id-badge text-amber-500"></i>
-          <span>UID: <strong class="mono"><%= user.public_uid %></strong></span>
+        <!-- User Profile & 6-Digit UID -->
+        <div class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-slate-200/80 dark:bg-slate-800/90 border border-slate-300/60 dark:border-slate-700/60">
+          <% if (user.avatar_url) { %>
+            <img src="<%= user.avatar_url %>" alt="Avatar" class="w-6 h-6 rounded-full object-cover border border-amber-400" />
+          <% } else { %>
+            <div class="w-6 h-6 rounded-full bg-amber-500 text-slate-950 font-extrabold text-xs flex items-center justify-center">
+              <%= user.username.charAt(0).toUpperCase() %>
+            </div>
+          <% } %>
+          <div class="text-xs leading-tight">
+            <div class="font-bold"><%= user.username %></div>
+            <div class="text-[10px] text-slate-500 dark:text-slate-400 mono">UID: <%= user.public_uid %></div>
+          </div>
         </div>
 
         <!-- Theme Toggle Button -->
@@ -76,7 +99,7 @@
           <i id="theme-icon" class="fa-solid fa-sun text-amber-400"></i>
         </button>
 
-        <a href="/logout" class="px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 text-xs font-semibold transition flex items-center gap-1.5">
+        <a href="/logout" class="px-3.5 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 text-xs font-bold transition flex items-center gap-1.5">
           <i class="fa-solid fa-right-from-bracket"></i>
           <span class="hidden sm:inline">Logout</span>
         </a>
@@ -87,90 +110,98 @@
   <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
 
     <!-- Toast Notification Banner -->
-    <div id="toast" class="hidden fixed bottom-5 right-5 z-50 px-5 py-3.5 rounded-xl shadow-2xl font-medium text-sm flex items-center gap-2.5 border transition-all"></div>
+    <div id="toast" class="hidden fixed bottom-5 right-5 z-50 px-5 py-3.5 rounded-xl shadow-2xl font-bold text-xs flex items-center gap-2.5 border transition-all"></div>
 
     <!-- Top KPI Stat Cards -->
     <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <div class="card-3d bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
-        <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
+        <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-semibold">
           <span>AVAILABLE WALLET</span>
-          <i class="fa-solid fa-wallet text-amber-500 text-base"></i>
+          <div class="w-8 h-8 rounded-lg bg-amber-500/15 text-amber-500 flex items-center justify-center">
+            <i class="fa-solid fa-wallet"></i>
+          </div>
         </div>
         <div class="mt-2 text-2xl font-extrabold mono text-slate-900 dark:text-white" id="wallet-balance">
           $<%= parseFloat(user.balance_usdt).toFixed(4) %>
         </div>
-        <div class="mt-3 flex gap-2">
-          <button onclick="openModal('deposit-modal')" class="flex-1 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition">
+        <div class="mt-3.5 flex gap-2">
+          <button onclick="openModal('deposit-modal')" class="flex-1 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-extrabold text-xs transition shadow-sm">
             <i class="fa-solid fa-arrow-down mr-1"></i>Deposit
           </button>
-          <button onclick="openModal('withdraw-modal')" class="flex-1 py-1.5 rounded-lg bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 font-semibold text-xs transition">
+          <button onclick="openModal('withdraw-modal')" class="flex-1 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 font-bold text-xs transition">
             <i class="fa-solid fa-arrow-up mr-1"></i>Withdraw
           </button>
         </div>
       </div>
 
       <div class="card-3d bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
-        <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
+        <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-semibold">
           <span>ACTIVE HASHPOWER</span>
-          <i class="fa-solid fa-microchip text-emerald-500 text-base"></i>
+          <div class="w-8 h-8 rounded-lg bg-emerald-500/15 text-emerald-500 flex items-center justify-center">
+            <i class="fa-solid fa-microchip"></i>
+          </div>
         </div>
         <div class="mt-2 text-2xl font-extrabold mono text-emerald-500">
           <%= parseFloat(user.total_hashrate_ghs).toLocaleString() %> <span class="text-sm font-semibold">GH/s</span>
         </div>
-        <p class="mt-3 text-xs text-slate-500 dark:text-slate-400">
-          <i class="fa-solid fa-server text-amber-500 mr-1"></i><%= contracts.length + 1 %> Active Gold Nodes
+        <p class="mt-4 text-xs text-slate-500 dark:text-slate-400">
+          <i class="fa-solid fa-server text-amber-500 mr-1.5"></i><%= contracts.length + 1 %> Active Gold ASIC Rigs
         </p>
       </div>
 
       <div class="card-3d bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
-        <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
+        <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-semibold">
           <span>EST. DAILY YIELD</span>
-          <i class="fa-solid fa-chart-line text-amber-500 text-base"></i>
+          <div class="w-8 h-8 rounded-lg bg-amber-500/15 text-amber-500 flex items-center justify-center">
+            <i class="fa-solid fa-chart-line"></i>
+          </div>
         </div>
         <div class="mt-2 text-2xl font-extrabold mono text-amber-500">
           +$<%= totalDailyRate.toFixed(4) %> <span class="text-xs font-normal text-slate-400">/day</span>
         </div>
-        <p class="mt-3 text-xs text-slate-500 dark:text-slate-400">
-          Monthly: <strong class="text-slate-700 dark:text-slate-200">$<%= (totalDailyRate * 30).toFixed(2) %></strong>
+        <p class="mt-4 text-xs text-slate-500 dark:text-slate-400">
+          30-Day Projection: <strong class="text-slate-800 dark:text-slate-200 mono">$<%= (totalDailyRate * 30).toFixed(2) %></strong>
         </p>
       </div>
 
       <div class="card-3d bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
-        <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
-          <span>AFFILIATE REWARDS (10%)</span>
-          <i class="fa-solid fa-users text-purple-500 text-base"></i>
+        <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-semibold">
+          <span>AFFILIATE BONUS (10%)</span>
+          <div class="w-8 h-8 rounded-lg bg-purple-500/15 text-purple-500 flex items-center justify-center">
+            <i class="fa-solid fa-users"></i>
+          </div>
         </div>
         <div class="mt-2 text-2xl font-extrabold mono text-purple-500">
           $<%= parseFloat(user.referral_earnings).toFixed(4) %>
         </div>
-        <p class="mt-3 text-xs text-slate-500 dark:text-slate-400">
-          Invited Miners: <strong class="text-slate-700 dark:text-slate-200"><%= referralCount %></strong>
+        <p class="mt-4 text-xs text-slate-500 dark:text-slate-400">
+          Referred Partners: <strong class="text-slate-800 dark:text-slate-200"><%= referralCount %></strong>
         </p>
       </div>
     </section>
 
     <!-- Live Mining Engine Console -->
-    <section class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-900 to-amber-950/40 border border-amber-500/30 p-6 sm:p-8 text-white shadow-xl">
+    <section class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-900 to-amber-950/50 border border-amber-500/30 p-6 sm:p-8 text-white shadow-2xl">
       <div class="flex flex-col lg:flex-row items-center justify-between gap-6">
         <div class="flex items-center gap-5">
           <div class="relative mining-pulse w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-amber-400 to-yellow-600 flex items-center justify-center text-slate-950 text-3xl shadow-lg shadow-amber-500/30 shrink-0">
-            <i class="fa-solid fa-fan fa-spin" style="--fa-animation-duration: 3s;"></i>
+            <i class="fa-solid fa-fan fa-spin" style="--fa-animation-duration: 2.5s;"></i>
           </div>
           <div>
-            <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-semibold mb-2">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-bold mb-2">
               <i class="fa-solid fa-bolt"></i> LIVE GOLD HASH ACCRUAL
             </div>
             <div class="text-3xl sm:text-5xl font-extrabold mono tracking-tight text-amber-300" id="live-mined-counter">
               $<%= unclaimedUsdt.toFixed(8) %>
             </div>
-            <p class="text-xs text-slate-400 mt-1.5">
-              Speed: <span class="mono text-emerald-400">+$<%= perSecondRate.toFixed(8) %>/sec</span> • Auto-syncs with PostgreSQL Ledger
+            <p class="text-xs text-slate-400 mt-2">
+              Mining Velocity: <span class="mono text-emerald-400 font-bold">+$<%= perSecondRate.toFixed(8) %>/sec</span> • Synced with Neon PostgreSQL
             </p>
           </div>
         </div>
 
-        <div class="w-full lg:w-auto flex flex-col sm:flex-row gap-3">
-          <button onclick="claimMined()" id="claim-btn" class="px-7 py-4 rounded-2xl bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-500 hover:from-amber-300 hover:to-yellow-400 text-slate-950 font-extrabold text-sm shadow-lg shadow-amber-500/25 transition flex items-center justify-center gap-2">
+        <div class="w-full lg:w-auto">
+          <button onclick="claimMined()" id="claim-btn" class="w-full lg:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-500 hover:from-amber-300 hover:to-yellow-400 text-slate-950 font-extrabold text-sm shadow-lg shadow-amber-500/25 transition flex items-center justify-center gap-2.5">
             <i class="fa-solid fa-hand-holding-dollar text-lg"></i>
             <span>COLLECT TO WALLET</span>
           </button>
@@ -193,7 +224,7 @@
         <% plans.forEach(plan => { 
           const dailyEarn = (parseFloat(plan.price_usdt) * parseFloat(plan.daily_roi_percent) / 100);
         %>
-          <div class="card-3d bg-white dark:bg-slate-900 border <%= plan.tier_badge === 'POPULAR' ? 'border-amber-500 ring-2 ring-amber-500/20' : 'border-slate-200 dark:border-slate-800' %> rounded-2xl p-5 flex flex-col justify-between">
+          <div class="card-3d bg-white dark:bg-slate-900 border <%= plan.tier_badge === 'POPULAR' ? 'border-amber-500 ring-2 ring-amber-500/25' : 'border-slate-200 dark:border-slate-800' %> rounded-2xl p-5 flex flex-col justify-between">
             <div>
               <div class="flex items-center justify-between mb-3">
                 <span class="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/30">
@@ -205,7 +236,7 @@
               <div class="mt-2 text-2xl font-extrabold mono text-slate-900 dark:text-white">
                 <%= parseFloat(plan.price_usdt) === 0 ? 'FREE' : '$' + parseFloat(plan.price_usdt).toFixed(2) %>
               </div>
-              <ul class="mt-4 space-y-2 text-xs text-slate-600 dark:text-slate-300 border-t border-slate-200 dark:border-slate-800 pt-3">
+              <ul class="mt-4 space-y-2.5 text-xs text-slate-600 dark:text-slate-300 border-t border-slate-200 dark:border-slate-800 pt-3.5">
                 <li class="flex justify-between">
                   <span>Hashpower:</span>
                   <strong class="mono text-emerald-500"><%= parseFloat(plan.hashrate_ghs).toLocaleString() %> GH/s</strong>
@@ -239,35 +270,33 @@
 
     <!-- Affiliate Referral Link & Interactive ROI Calculator -->
     <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <!-- Affiliate Box -->
       <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6">
         <h3 class="font-bold text-base flex items-center gap-2">
           <i class="fa-solid fa-share-nodes text-amber-500"></i> Partner Referral Program (10% Instant USDT)
         </h3>
         <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          Share your invite link. You earn 10% instant withdrawable USDT whenever a referred miner activates any contract.
+          Share your invite link. Earn 10% instant withdrawable USDT whenever a referred miner activates any contract.
         </p>
         <div class="mt-4 flex gap-2">
-          <input type="text" id="ref-link" readonly value="<%= baseUrl %>/login?ref=<%= user.referral_code %>" class="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-xs mono outline-none" />
-          <button onclick="copyRef()" class="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition">
+          <input type="text" id="ref-link" readonly value="<%= baseUrl %>/login?mode=register&ref=<%= user.referral_code %>" class="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-xs mono outline-none" />
+          <button onclick="copyRef()" class="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs transition">
             <i class="fa-solid fa-copy mr-1"></i>Copy
           </button>
         </div>
       </div>
 
-      <!-- Profit Simulator -->
       <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6">
         <h3 class="font-bold text-base flex items-center gap-2">
           <i class="fa-solid fa-calculator text-emerald-500"></i> Gold Mining Yield Calculator
         </h3>
         <div class="mt-3 grid grid-cols-2 gap-4 items-center">
           <div>
-            <label class="text-xs text-slate-500 dark:text-slate-400">Investment Amount (USDT)</label>
-            <input type="number" id="calc-amount" value="100" min="10" oninput="updateCalc()" class="mt-1 w-full px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 mono font-bold text-sm outline-none" />
+            <label class="text-xs text-slate-500 dark:text-slate-400">Contract Deposit (USDT)</label>
+            <input type="number" id="calc-amount" value="250" min="15" oninput="updateCalc()" class="mt-1 w-full px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 mono font-bold text-sm outline-none" />
           </div>
           <div class="bg-slate-100 dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
-            <div class="text-[11px] text-slate-400">Est. 30-Day Return (6.0% Daily)</div>
-            <div class="text-lg font-extrabold mono text-emerald-500" id="calc-output">$180.00 USDT</div>
+            <div class="text-[11px] text-slate-400">Est. 30-Day Return (6.4% Daily)</div>
+            <div class="text-lg font-extrabold mono text-emerald-500" id="calc-output">$480.00 USDT</div>
           </div>
         </div>
       </div>
@@ -428,17 +457,26 @@
   </div>
 
   <script>
-    // 1. Live Real-Time Mining Ticker (Synced with Backend Rate)
+    // 1. Live Real-Time Mining Ticker
     let unclaimed = <%= unclaimedUsdt %>;
     const perSecond = <%= perSecondRate %>;
     const counterEl = document.getElementById('live-mined-counter');
 
     setInterval(() => {
-      unclaimed += perSecond / 10; // 100ms smooth tick
+      unclaimed += perSecond / 10;
       counterEl.textContent = '$' + unclaimed.toFixed(8);
     }, 100);
 
-    // 2. Dark / Light Theme Toggle
+    // 2. Live BTC Price Fetch (CoinGecko Public API)
+    fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,pax-gold&vs_currencies=usd')
+      .then(r => r.json())
+      .then(d => {
+        if (d['pax-gold']?.usd) document.getElementById('ticker-gold').textContent = '$' + d['pax-gold'].usd.toLocaleString();
+        if (d.bitcoin?.usd) document.getElementById('ticker-btc').textContent = '$' + d.bitcoin.usd.toLocaleString();
+      })
+      .catch(() => {});
+
+    // 3. Dark / Light Theme Toggle
     const htmlEl = document.documentElement;
     const themeIcon = document.getElementById('theme-icon');
     if (localStorage.getItem('gh_theme') === 'light') {
@@ -452,7 +490,6 @@
       themeIcon.className = isDark ? 'fa-solid fa-sun text-amber-400' : 'fa-solid fa-moon text-slate-700';
     });
 
-    // 3. Toast Helper
     function showToast(msg, isError = false) {
       const t = document.getElementById('toast');
       t.textContent = msg;
@@ -463,7 +500,6 @@
       setTimeout(() => t.classList.add('hidden'), 3500);
     }
 
-    // 4. Claim Mined Balance
     async function claimMined() {
       const btn = document.getElementById('claim-btn');
       btn.disabled = true;
@@ -481,7 +517,6 @@
       }
     }
 
-    // 5. Purchase Plan
     async function buyPlan(planId, name, price) {
       if (!confirm(`Deploy ${name} for $${price} USDT from your wallet balance?`)) return;
       try {
@@ -499,7 +534,6 @@
       }
     }
 
-    // 6. Deposit & Withdraw Handlers
     const wallets = <%- JSON.stringify(depositWallets) %>;
     function updateDepositAddress() {
       const net = document.getElementById('dep-network').value;
@@ -515,7 +549,7 @@
     }
     function updateCalc() {
       const val = parseFloat(document.getElementById('calc-amount').value) || 0;
-      document.getElementById('calc-output').textContent = '$' + (val * 1.8).toFixed(2) + ' USDT';
+      document.getElementById('calc-output').textContent = '$' + (val * 1.92).toFixed(2) + ' USDT';
     }
     function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
