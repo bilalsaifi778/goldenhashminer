@@ -73,7 +73,7 @@
       animation: pulse-ring 2s infinite;
     }
 
-    /* Left Slide-Over Navigation Drawer */
+    /* Left Navigation Sidebar */
     .left-drawer {
       transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
     }
@@ -81,80 +81,30 @@
 </head>
 <body class="bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-slate-100 min-h-screen transition-colors duration-300">
 
-  <!-- Top Bitcoin & Pool Ticker Strip -->
-  <div class="bg-slate-900 border-b border-amber-500/20 text-[11px] py-1.5 px-3 sm:px-6 text-slate-300">
-    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
-      <div class="flex flex-wrap items-center gap-3 sm:gap-5">
-        <span class="flex items-center gap-1.5 font-semibold text-amber-400">
-          <i class="fa-brands fa-bitcoin text-sm"></i> BTC/USDT: <strong class="mono text-white" id="ticker-btc">$94,850.00</strong>
-        </span>
-        <span class="flex items-center gap-1.5 font-semibold text-emerald-400">
-          <i class="fa-solid fa-percent"></i> ROI: <strong class="mono text-white">1% Daily / 30% Monthly</strong>
-        </span>
-      </div>
-      <div class="hidden md:flex items-center gap-3 text-amber-400 font-semibold">
-        <span><i class="fa-solid fa-microchip mr-1"></i>SHA-256 Pool: 518.4 EH/s</span>
-      </div>
-    </div>
-  </div>
+  <!-- MOBILE BACKDROP (Only active below lg breakpoint) -->
+  <div id="left-drawer-backdrop" onclick="closeLeftDrawer()" class="hidden fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-xs lg:hidden"></div>
 
-  <!-- Main Sticky Navigation Bar -->
-  <header class="sticky top-0 z-40 backdrop-blur-xl bg-white/90 dark:bg-slate-900/90 border-b border-slate-200 dark:border-amber-500/20">
-    <div class="max-w-7xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between gap-2">
-      <!-- Left: Hamburger Menu Button + Brand Logo -->
-      <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
-        <button type="button" onclick="openLeftDrawer()" class="w-10 h-10 rounded-xl bg-slate-200/80 dark:bg-slate-800 hover:bg-amber-500/20 border border-slate-300/60 dark:border-slate-700 flex items-center justify-center text-slate-800 dark:text-amber-400 transition shrink-0" aria-label="Open Navigation Menu">
-          <i class="fa-solid fa-bars text-base"></i>
-        </button>
-
-        <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-amber-400 via-yellow-500 to-orange-600 flex items-center justify-center text-slate-950 text-lg sm:text-xl font-extrabold shadow-lg shadow-amber-500/25 shrink-0">
-          <i class="fa-brands fa-bitcoin"></i>
-        </div>
-        <div class="truncate">
-          <span class="font-extrabold tracking-tight text-sm sm:text-lg bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 bg-clip-text text-transparent">GOLDEN HASH MINER</span>
-          <span class="hidden xl:inline-block ml-2 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/30">
-            <i class="fa-solid fa-circle text-[7px] mr-1 animate-pulse"></i>SHA-256 ACTIVE
-          </span>
-        </div>
-      </div>
-
-      <!-- Right: Support (With Unread Reply Badge) + Theme Toggle + Logout -->
-      <div class="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-        <button type="button" onclick="openSupportSectionAndMarkRead()" class="relative px-3 sm:px-3.5 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border border-amber-500/30 text-xs font-bold transition flex items-center gap-1.5">
-          <i class="fa-solid fa-headset"></i>
-          <span>Support</span>
-          <% if (unreadRepliesCount > 0) { %>
-            <span id="header-unread-badge" class="ml-0.5 px-1.5 py-0.5 text-[10px] font-extrabold rounded-full bg-rose-500 text-white animate-pulse">
-              <%= unreadRepliesCount %>
-            </span>
-          <% } %>
-        </button>
-
-        <button id="theme-toggle" class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-amber-500/20 flex items-center justify-center transition shrink-0" title="Toggle Dark/Light Theme">
-          <i id="theme-icon" class="fa-solid fa-sun text-amber-400 text-sm"></i>
-        </button>
-
-        <a href="/logout" class="px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 text-xs font-bold transition flex items-center gap-1.5 shrink-0">
-          <i class="fa-solid fa-right-from-bracket"></i>
-          <span class="hidden sm:inline">Logout</span>
-        </a>
-      </div>
-    </div>
-  </header>
-
-  <!-- LEFT SIDE HAMBURGER NAVIGATION DRAWER -->
-  <div id="left-drawer-backdrop" onclick="closeLeftDrawer()" class="hidden fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-xs"></div>
-  <aside id="left-drawer" class="left-drawer fixed top-0 left-0 bottom-0 z-50 w-72 sm:w-80 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-amber-500/25 shadow-2xl -translate-x-full flex flex-col justify-between overflow-y-auto">
+  <!-- PERSISTENT LEFT SIDEBAR ON DESKTOP/LAPTOP (lg:translate-x-0) + HAMBURGER DRAWER ON MOBILE -->
+  <aside id="left-drawer" class="left-drawer fixed top-0 left-0 bottom-0 z-50 w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-amber-500/20 shadow-2xl lg:shadow-none -translate-x-full lg:translate-x-0 flex flex-col justify-between overflow-y-auto">
     <div>
-      <!-- Drawer Top Close Row -->
-      <div class="px-5 pt-5 pb-3 flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800">
-        <span class="text-xs font-extrabold uppercase tracking-wider text-amber-500">Miner Navigation</span>
-        <button type="button" onclick="closeLeftDrawer()" class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-rose-500/20 hover:text-rose-400 flex items-center justify-center transition">
+      <!-- Sidebar Brand Header -->
+      <div class="px-5 h-16 flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 via-yellow-500 to-orange-600 flex items-center justify-center text-slate-950 text-lg font-extrabold shadow-lg shadow-amber-500/25 shrink-0">
+            <i class="fa-brands fa-bitcoin"></i>
+          </div>
+          <div class="truncate">
+            <span class="font-extrabold tracking-tight text-sm bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 bg-clip-text text-transparent">GOLDEN HASH</span>
+            <span class="block text-[9px] font-bold tracking-widest uppercase text-slate-400">BTC Cloud Miner</span>
+          </div>
+        </div>
+        <!-- Close Button (Hidden on Laptop/Desktop lg+) -->
+        <button type="button" onclick="closeLeftDrawer()" class="lg:hidden w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-rose-500/20 hover:text-rose-400 flex items-center justify-center transition">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
 
-      <!-- Profile Logo on Top + Name Below -->
+      <!-- Profile Logo on Top + Miner Name Below -->
       <div class="p-5 border-b border-slate-200/80 dark:border-slate-800 flex flex-col items-center text-center bg-gradient-to-b from-amber-500/10 to-transparent">
         <% if (user.avatar_url) { %>
           <img src="<%= user.avatar_url %>" alt="Profile Logo" class="w-16 h-16 rounded-2xl object-cover border-2 border-amber-400 shadow-lg shadow-amber-500/20" />
@@ -165,53 +115,61 @@
         <% } %>
         <div class="mt-3 font-extrabold text-base text-slate-900 dark:text-white truncate max-w-full"><%= user.username %></div>
         <div class="mt-0.5 text-[11px] mono text-amber-500 font-bold">UID: #<%= user.public_uid %></div>
-        <div class="mt-2 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[11px] font-bold mono">
-          Balance: $<%= parseFloat(user.balance_usdt).toFixed(2) %>
+        <div class="mt-2.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[11px] font-bold mono">
+          Wallet: $<%= parseFloat(user.balance_usdt).toFixed(2) %>
         </div>
       </div>
 
-      <!-- Important Navigation Menu -->
+      <!-- Primary Left Navigation Menu -->
       <nav class="p-4 space-y-1.5 text-xs font-bold">
-        <a href="#mining-console" onclick="closeLeftDrawer()" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-amber-500/15 hover:text-amber-400 transition">
-          <i class="fa-solid fa-gauge-high w-4 text-center text-amber-500"></i>
+        <button type="button" id="nav-mining" onclick="showDashboardView('mining-console')" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-amber-500/15 text-amber-500 border border-amber-500/30 transition text-left">
+          <i class="fa-solid fa-gauge-high w-4 text-center"></i>
           <span>Mining Console</span>
-        </a>
-        <a href="#btc-rigs" onclick="closeLeftDrawer()" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-amber-500/15 hover:text-amber-400 transition">
+        </button>
+
+        <button type="button" id="nav-rigs" onclick="showDashboardView('btc-rigs')" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-amber-500/10 hover:text-amber-400 transition text-left">
           <i class="fa-brands fa-bitcoin w-4 text-center text-amber-500"></i>
           <span>3D Bitcoin ASIC Rigs</span>
-        </a>
-        <button type="button" onclick="closeLeftDrawer(); openDepositModal();" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-amber-500/15 hover:text-amber-400 transition text-left">
-          <i class="fa-solid fa-circle-arrow-down w-4 text-center text-emerald-500"></i>
-          <span>Deposit USDT (BEP20 Default)</span>
         </button>
-        <button type="button" onclick="closeLeftDrawer(); openModal('withdraw-modal');" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-amber-500/15 hover:text-amber-400 transition text-left">
+
+        <button type="button" onclick="closeLeftDrawer(); openDepositModal();" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-amber-500/10 hover:text-amber-400 transition text-left">
+          <i class="fa-solid fa-circle-arrow-down w-4 text-center text-emerald-500"></i>
+          <span>Deposit USDT (BEP20)</span>
+        </button>
+
+        <button type="button" onclick="closeLeftDrawer(); openModal('withdraw-modal');" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-amber-500/10 hover:text-amber-400 transition text-left">
           <i class="fa-solid fa-circle-arrow-up w-4 text-center text-amber-400"></i>
           <span>Withdraw Earnings</span>
         </button>
-        <a href="#profit-calc" onclick="closeLeftDrawer()" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-amber-500/15 hover:text-amber-400 transition">
+
+        <button type="button" id="nav-calc" onclick="showDashboardView('profit-calc')" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-amber-500/10 hover:text-amber-400 transition text-left">
           <i class="fa-solid fa-calculator w-4 text-center text-emerald-400"></i>
           <span>1% / 30% Profit Calculator</span>
-        </a>
-        <a href="#support-section" onclick="closeLeftDrawer(); markRepliesRead();" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-amber-500/15 hover:text-amber-400 transition">
+        </button>
+
+        <!-- Dedicated Support Tickets Tab -->
+        <button type="button" id="nav-support" onclick="showSupportView()" class="nav-item w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-amber-500/10 hover:text-amber-400 transition text-left">
           <span class="flex items-center gap-3">
             <i class="fa-solid fa-headset w-4 text-center text-amber-500"></i>
             <span>Support Tickets</span>
           </span>
           <% if (unreadRepliesCount > 0) { %>
-            <span class="drawer-unread-badge px-2 py-0.5 text-[10px] font-extrabold rounded-full bg-rose-500 text-white">
+            <span class="drawer-unread-badge px-2 py-0.5 text-[10px] font-extrabold rounded-full bg-rose-500 text-white animate-pulse">
               <%= unreadRepliesCount %> New
             </span>
           <% } %>
-        </a>
-        <a href="#ledger-history" onclick="closeLeftDrawer()" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-amber-500/15 hover:text-amber-400 transition">
+        </button>
+
+        <button type="button" id="nav-ledger" onclick="showDashboardView('ledger-history')" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-amber-500/10 hover:text-amber-400 transition text-left">
           <i class="fa-solid fa-clock-rotate-left w-4 text-center text-slate-400"></i>
           <span>Transaction Ledger</span>
-        </a>
+        </button>
+
         <% if (user.role === 'admin') { %>
-          <a href="#admin-panel" onclick="closeLeftDrawer()" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30 transition">
+          <button type="button" id="nav-admin" onclick="showDashboardView('admin-panel')" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-amber-400 hover:bg-amber-500/15 transition text-left">
             <i class="fa-solid fa-shield-halved w-4 text-center"></i>
             <span>Admin Control Desk</span>
-          </a>
+          </button>
         <% } %>
       </nav>
     </div>
@@ -224,470 +182,560 @@
     </div>
   </aside>
 
-  <main class="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-5 sm:space-y-6">
+  <!-- RIGHT CONTENT AREA (Offset by lg:pl-72 on Laptop/Desktop so Sidebar Never Auto-Hides) -->
+  <div class="lg:pl-72 flex flex-col min-h-screen">
 
-    <!-- Toast Notification Banner -->
-    <div id="toast" class="hidden fixed bottom-4 right-4 left-4 sm:left-auto sm:max-w-sm z-50 px-4 py-3.5 rounded-xl shadow-2xl font-bold text-xs flex items-center gap-2.5 border transition-all"></div>
+    <!-- Top Bitcoin & Pool Ticker Strip -->
+    <div class="bg-slate-900 border-b border-amber-500/20 text-[11px] py-1.5 px-3 sm:px-6 text-slate-300">
+      <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+        <div class="flex flex-wrap items-center gap-3 sm:gap-5">
+          <span class="flex items-center gap-1.5 font-semibold text-amber-400">
+            <i class="fa-brands fa-bitcoin text-sm"></i> BTC/USDT: <strong class="mono text-white" id="ticker-btc">$94,850.00</strong>
+          </span>
+          <span class="flex items-center gap-1.5 font-semibold text-emerald-400">
+            <i class="fa-solid fa-percent"></i> ROI: <strong class="mono text-white">1% Daily / 30% Monthly</strong>
+          </span>
+        </div>
+        <div class="hidden md:flex items-center gap-3 text-amber-400 font-semibold">
+          <span><i class="fa-solid fa-microchip mr-1"></i>SHA-256 Pool: 518.4 EH/s</span>
+        </div>
+      </div>
+    </div>
 
-    <!-- Top KPI Stat Cards -->
-    <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3.5 sm:gap-4">
-      <div class="card-3d bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-sm">
-        <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-semibold">
-          <span>AVAILABLE WALLET</span>
-          <div class="w-8 h-8 rounded-lg bg-amber-500/15 text-amber-500 flex items-center justify-center">
-            <i class="fa-solid fa-wallet"></i>
-          </div>
-        </div>
-        <div class="mt-2 text-xl sm:text-2xl font-extrabold mono text-slate-900 dark:text-white break-all" id="wallet-balance">
-          $<%= parseFloat(user.balance_usdt).toFixed(4) %>
-        </div>
-        <div class="mt-3.5 flex gap-2">
-          <button onclick="openDepositModal()" class="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-extrabold text-xs transition shadow-sm">
-            <i class="fa-solid fa-arrow-down mr-1"></i>Deposit
+    <!-- Main Sticky Top Header -->
+    <header class="sticky top-0 z-30 backdrop-blur-xl bg-white/90 dark:bg-slate-900/90 border-b border-slate-200 dark:border-amber-500/20">
+      <div class="max-w-7xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between gap-2">
+        <!-- Left: Hamburger Trigger (Visible only below lg) + Page Title -->
+        <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+          <button type="button" onclick="openLeftDrawer()" class="lg:hidden w-10 h-10 rounded-xl bg-slate-200/80 dark:bg-slate-800 hover:bg-amber-500/20 border border-slate-300/60 dark:border-slate-700 flex items-center justify-center text-slate-800 dark:text-amber-400 transition shrink-0" aria-label="Open Navigation Menu">
+            <i class="fa-solid fa-bars text-base"></i>
           </button>
-          <button onclick="openModal('withdraw-modal')" class="flex-1 py-2.5 px-3 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 font-bold text-xs transition">
-            <i class="fa-solid fa-arrow-up mr-1"></i>Withdraw
+
+          <div class="truncate">
+            <span id="topbar-title" class="font-extrabold tracking-tight text-sm sm:text-lg bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 bg-clip-text text-transparent">
+              GOLDEN HASH MINER
+            </span>
+            <span class="hidden xl:inline-block ml-2 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/30">
+              <i class="fa-solid fa-circle text-[7px] mr-1 animate-pulse"></i>SHA-256 ACTIVE
+            </span>
+          </div>
+        </div>
+
+        <!-- Right: Support Quick Button (With Unread Reply Badge) + Theme Toggle + Logout -->
+        <div class="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+          <button type="button" onclick="showSupportView()" class="relative px-3 sm:px-3.5 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border border-amber-500/30 text-xs font-bold transition flex items-center gap-1.5">
+            <i class="fa-solid fa-headset"></i>
+            <span>Support</span>
+            <% if (unreadRepliesCount > 0) { %>
+              <span id="header-unread-badge" class="ml-0.5 px-1.5 py-0.5 text-[10px] font-extrabold rounded-full bg-rose-500 text-white animate-pulse">
+                <%= unreadRepliesCount %>
+              </span>
+            <% } %>
           </button>
+
+          <button id="theme-toggle" class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-amber-500/20 flex items-center justify-center transition shrink-0" title="Toggle Dark/Light Theme">
+            <i id="theme-icon" class="fa-solid fa-sun text-amber-400 text-sm"></i>
+          </button>
+
+          <a href="/logout" class="px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 text-xs font-bold transition flex items-center gap-1.5 shrink-0">
+            <i class="fa-solid fa-right-from-bracket"></i>
+            <span class="hidden sm:inline">Logout</span>
+          </a>
         </div>
       </div>
+    </header>
 
-      <div class="card-3d bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-sm">
-        <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-semibold">
-          <span>BTC HASHPOWER</span>
-          <div class="w-8 h-8 rounded-lg bg-emerald-500/15 text-emerald-500 flex items-center justify-center">
-            <i class="fa-solid fa-microchip"></i>
-          </div>
-        </div>
-        <div class="mt-2 text-xl sm:text-2xl font-extrabold mono text-emerald-500 break-words">
-          <%= parseFloat(user.total_hashrate_ghs).toLocaleString() %> <span class="text-xs sm:text-sm font-semibold">GH/s</span>
-        </div>
-        <p class="mt-3 sm:mt-4 text-xs text-slate-500 dark:text-slate-400">
-          <i class="fa-solid fa-server text-amber-500 mr-1.5"></i><%= contracts.length + 1 %> Active BTC ASIC Miners
-        </p>
-      </div>
+    <main class="max-w-7xl w-full mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-5 sm:space-y-6 flex-1">
 
-      <div class="card-3d bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-sm">
-        <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-semibold">
-          <span>DAILY PROFIT (1%)</span>
-          <div class="w-8 h-8 rounded-lg bg-amber-500/15 text-amber-500 flex items-center justify-center">
-            <i class="fa-solid fa-chart-line"></i>
-          </div>
-        </div>
-        <div class="mt-2 text-xl sm:text-2xl font-extrabold mono text-amber-500 break-all">
-          +$<%= totalDailyRate.toFixed(4) %> <span class="text-xs font-normal text-slate-400">/day</span>
-        </div>
-        <p class="mt-3 sm:mt-4 text-xs text-slate-500 dark:text-slate-400">
-          30-Day Profit (30%): <strong class="text-emerald-500 mono">+$<%= (totalDailyRate * 30).toFixed(2) %></strong>
-        </p>
-      </div>
+      <!-- Toast Notification Banner -->
+      <div id="toast" class="hidden fixed bottom-4 right-4 left-4 sm:left-auto sm:max-w-sm z-50 px-4 py-3.5 rounded-xl shadow-2xl font-bold text-xs flex items-center gap-2.5 border transition-all"></div>
 
-      <div class="card-3d bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-sm">
-        <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-semibold">
-          <span>AFFILIATE BONUS (10%)</span>
-          <div class="w-8 h-8 rounded-lg bg-purple-500/15 text-purple-500 flex items-center justify-center">
-            <i class="fa-solid fa-users"></i>
-          </div>
-        </div>
-        <div class="mt-2 text-xl sm:text-2xl font-extrabold mono text-purple-500 break-all">
-          $<%= parseFloat(user.referral_earnings).toFixed(4) %>
-        </div>
-        <p class="mt-3 sm:mt-4 text-xs text-slate-500 dark:text-slate-400">
-          Referred Miners: <strong class="text-slate-800 dark:text-slate-200"><%= referralCount %></strong>
-        </p>
-      </div>
-    </section>
+      <!-- ==================== VIEW 1: MAIN MINING DASHBOARD ==================== -->
+      <div id="view-dashboard" class="space-y-5 sm:space-y-6">
 
-    <!-- Live Bitcoin Mining Console -->
-    <section id="mining-console" class="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-slate-900 via-slate-900 to-amber-950/50 border border-amber-500/30 p-5 sm:p-8 text-white shadow-2xl">
-      <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 sm:gap-6">
-        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-5 w-full">
-          <div class="relative mining-pulse w-14 h-14 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-amber-400 via-yellow-500 to-orange-600 flex items-center justify-center text-slate-950 text-2xl sm:text-3xl font-extrabold shadow-lg shadow-amber-500/30 shrink-0">
-            <i class="fa-brands fa-bitcoin"></i>
-          </div>
-          <div class="min-w-0 flex-1">
-            <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[10px] sm:text-xs font-bold mb-2">
-              <i class="fa-solid fa-bolt"></i> GOLDEN HASH BTC ENGINE • 1% DAILY / 30% MONTHLY
+        <!-- Top KPI Stat Cards -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3.5 sm:gap-4">
+          <div class="card-3d bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-sm">
+            <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-semibold">
+              <span>AVAILABLE WALLET</span>
+              <div class="w-8 h-8 rounded-lg bg-amber-500/15 text-amber-500 flex items-center justify-center">
+                <i class="fa-solid fa-wallet"></i>
+              </div>
             </div>
-            <div class="text-2xl sm:text-4xl lg:text-5xl font-extrabold mono tracking-tight text-amber-300 break-all" id="live-mined-counter">
-              $<%= unclaimedUsdt.toFixed(8) %>
+            <div class="mt-2 text-xl sm:text-2xl font-extrabold mono text-slate-900 dark:text-white break-all" id="wallet-balance">
+              $<%= parseFloat(user.balance_usdt).toFixed(4) %>
             </div>
-            <p class="text-[11px] sm:text-xs text-slate-400 mt-1.5">
-              Hash Velocity: <span class="mono text-emerald-400 font-bold">+$<%= perSecondRate.toFixed(8) %>/sec</span> • SHA-256 Cloud Pool
+            <div class="mt-3.5 flex gap-2">
+              <button onclick="openDepositModal()" class="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-extrabold text-xs transition shadow-sm">
+                <i class="fa-solid fa-arrow-down mr-1"></i>Deposit
+              </button>
+              <button onclick="openModal('withdraw-modal')" class="flex-1 py-2.5 px-3 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 font-bold text-xs transition">
+                <i class="fa-solid fa-arrow-up mr-1"></i>Withdraw
+              </button>
+            </div>
+          </div>
+
+          <div class="card-3d bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-sm">
+            <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-semibold">
+              <span>BTC HASHPOWER</span>
+              <div class="w-8 h-8 rounded-lg bg-emerald-500/15 text-emerald-500 flex items-center justify-center">
+                <i class="fa-solid fa-microchip"></i>
+              </div>
+            </div>
+            <div class="mt-2 text-xl sm:text-2xl font-extrabold mono text-emerald-500 break-words">
+              <%= parseFloat(user.total_hashrate_ghs).toLocaleString() %> <span class="text-xs sm:text-sm font-semibold">GH/s</span>
+            </div>
+            <p class="mt-3 sm:mt-4 text-xs text-slate-500 dark:text-slate-400">
+              <i class="fa-solid fa-server text-amber-500 mr-1.5"></i><%= contracts.length + 1 %> Active BTC ASIC Miners
             </p>
           </div>
-        </div>
 
-        <div class="w-full lg:w-auto shrink-0">
-          <button onclick="claimMined()" id="claim-btn" class="w-full lg:w-auto px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-500 hover:from-amber-300 hover:to-yellow-400 text-slate-950 font-extrabold text-xs sm:text-sm shadow-lg shadow-amber-500/25 transition flex items-center justify-center gap-2.5">
-            <i class="fa-solid fa-hand-holding-dollar text-base sm:text-lg"></i>
-            <span>COLLECT TO WALLET</span>
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- Bitcoin Mining Rig Cards (Free Welcome + $50 to $10,000, 3D ASIC Rig on Every Card) -->
-    <section id="btc-rigs">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
-        <div>
-          <h2 class="text-lg sm:text-xl font-extrabold flex items-center gap-2">
-            <i class="fa-brands fa-bitcoin text-amber-500"></i> Golden Hash 3D Bitcoin ASIC Rigs
-          </h2>
-          <p class="text-xs text-slate-500 dark:text-slate-400">Free welcome rig + $50 to $10,000 rigs • Every rig earns <strong class="text-amber-500">1% daily profit</strong> and <strong class="text-emerald-500">30% monthly profit</strong> (30 days)</p>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        <% plans.forEach(plan => { 
-          const priceNum = parseFloat(plan.price_usdt);
-          const dailyEarn = priceNum === 0 ? 0.10 : (priceNum * 0.01);
-          const monthlyProfit = priceNum === 0 ? 3.00 : (priceNum * 0.30);
-          const isHighlighted = plan.tier_badge === 'POPULAR' || plan.tier_badge === 'WHALE VIP';
-        %>
-          <div class="card-3d bg-white dark:bg-slate-900 border <%= isHighlighted ? 'border-amber-500 ring-2 ring-amber-500/25' : 'border-slate-200 dark:border-slate-800' %> rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
-            <div>
-              <div class="flex items-center justify-between gap-2 mb-2">
-                <span class="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/30">
-                  <%= plan.tier_badge %>
-                </span>
-                <span class="text-xs text-slate-400 font-semibold"><%= plan.duration_days %> Days</span>
+          <div class="card-3d bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-sm">
+            <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-semibold">
+              <span>DAILY PROFIT (1%)</span>
+              <div class="w-8 h-8 rounded-lg bg-amber-500/15 text-amber-500 flex items-center justify-center">
+                <i class="fa-solid fa-chart-line"></i>
               </div>
+            </div>
+            <div class="mt-2 text-xl sm:text-2xl font-extrabold mono text-amber-500 break-all">
+              +$<%= totalDailyRate.toFixed(4) %> <span class="text-xs font-normal text-slate-400">/day</span>
+            </div>
+            <p class="mt-3 sm:mt-4 text-xs text-slate-500 dark:text-slate-400">
+              30-Day Profit (30%): <strong class="text-emerald-500 mono">+$<%= (totalDailyRate * 30).toFixed(2) %></strong>
+            </p>
+          </div>
 
-              <!-- 3D Bitcoin ASIC Miner Rig Visual -->
-              <div class="rig-stage my-3 py-3 rounded-2xl bg-slate-950/90 border border-amber-500/20 flex items-center justify-center overflow-hidden">
-                <div class="asic-rig-3d relative w-36 sm:w-40 h-22 sm:h-24 rounded-xl bg-gradient-to-br from-slate-800 via-slate-900 to-black border-2 border-amber-500/50 shadow-2xl p-2 flex items-center justify-between">
-                  <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-lg bg-slate-950 border border-slate-700 flex items-center justify-center relative shrink-0">
-                    <div class="fan-blades w-9 h-9 sm:w-11 sm:h-11 rounded-full border-2 border-dashed border-amber-400/80 flex items-center justify-center text-amber-400 text-xs">
-                      <i class="fa-solid fa-fan"></i>
-                    </div>
+          <div class="card-3d bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-sm">
+            <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-semibold">
+              <span>AFFILIATE BONUS (10%)</span>
+              <div class="w-8 h-8 rounded-lg bg-purple-500/15 text-purple-500 flex items-center justify-center">
+                <i class="fa-solid fa-users"></i>
+              </div>
+            </div>
+            <div class="mt-2 text-xl sm:text-2xl font-extrabold mono text-purple-500 break-all">
+              $<%= parseFloat(user.referral_earnings).toFixed(4) %>
+            </div>
+            <p class="mt-3 sm:mt-4 text-xs text-slate-500 dark:text-slate-400">
+              Referred Miners: <strong class="text-slate-800 dark:text-slate-200"><%= referralCount %></strong>
+            </p>
+          </div>
+        </section>
+
+        <!-- Live Bitcoin Mining Console -->
+        <section id="mining-console" class="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-slate-900 via-slate-900 to-amber-950/50 border border-amber-500/30 p-5 sm:p-8 text-white shadow-2xl">
+          <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 sm:gap-6">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-5 w-full">
+              <div class="relative mining-pulse w-14 h-14 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-amber-400 via-yellow-500 to-orange-600 flex items-center justify-center text-slate-950 text-2xl sm:text-3xl font-extrabold shadow-lg shadow-amber-500/30 shrink-0">
+                <i class="fa-brands fa-bitcoin"></i>
+              </div>
+              <div class="min-w-0 flex-1">
+                <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[10px] sm:text-xs font-bold mb-2">
+                  <i class="fa-solid fa-bolt"></i> GOLDEN HASH BTC ENGINE • 1% DAILY / 30% MONTHLY
+                </div>
+                <div class="text-2xl sm:text-4xl lg:text-5xl font-extrabold mono tracking-tight text-amber-300 break-all" id="live-mined-counter">
+                  $<%= unclaimedUsdt.toFixed(8) %>
+                </div>
+                <p class="text-[11px] sm:text-xs text-slate-400 mt-1.5">
+                  Hash Velocity: <span class="mono text-emerald-400 font-bold">+$<%= perSecondRate.toFixed(8) %>/sec</span> • SHA-256 Cloud Pool
+                </p>
+              </div>
+            </div>
+
+            <div class="w-full lg:w-auto shrink-0">
+              <button onclick="claimMined()" id="claim-btn" class="w-full lg:w-auto px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-500 hover:from-amber-300 hover:to-yellow-400 text-slate-950 font-extrabold text-xs sm:text-sm shadow-lg shadow-amber-500/25 transition flex items-center justify-center gap-2.5">
+                <i class="fa-solid fa-hand-holding-dollar text-base sm:text-lg"></i>
+                <span>COLLECT TO WALLET</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Bitcoin Mining Rig Cards (Free Welcome + $50 to $10,000, 3D ASIC Rig on Every Card) -->
+        <section id="btc-rigs">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+            <div>
+              <h2 class="text-lg sm:text-xl font-extrabold flex items-center gap-2">
+                <i class="fa-brands fa-bitcoin text-amber-500"></i> Golden Hash 3D Bitcoin ASIC Rigs
+              </h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Free welcome rig + $50 to $10,000 rigs • Every rig earns <strong class="text-amber-500">1% daily profit</strong> and <strong class="text-emerald-500">30% monthly profit</strong> (30 days)</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            <% plans.forEach(plan => { 
+              const priceNum = parseFloat(plan.price_usdt);
+              const dailyEarn = priceNum === 0 ? 0.10 : (priceNum * 0.01);
+              const monthlyProfit = priceNum === 0 ? 3.00 : (priceNum * 0.30);
+              const isHighlighted = plan.tier_badge === 'POPULAR' || plan.tier_badge === 'WHALE VIP';
+            %>
+              <div class="card-3d bg-white dark:bg-slate-900 border <%= isHighlighted ? 'border-amber-500 ring-2 ring-amber-500/25' : 'border-slate-200 dark:border-slate-800' %> rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between gap-2 mb-2">
+                    <span class="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/30">
+                      <%= plan.tier_badge %>
+                    </span>
+                    <span class="text-xs text-slate-400 font-semibold"><%= plan.duration_days %> Days</span>
                   </div>
-                  <div class="flex-1 pl-2 flex flex-col justify-between h-full min-w-0">
-                    <div class="flex items-center justify-between">
-                      <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                      <span class="text-[9px] font-bold mono text-amber-400">SHA-256</span>
-                    </div>
-                    <div class="flex items-center justify-center my-auto">
-                      <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-slate-950 font-extrabold flex items-center justify-center text-xs sm:text-sm shadow-md shadow-amber-500/30">
-                        <i class="fa-brands fa-bitcoin"></i>
+
+                  <!-- 3D Bitcoin ASIC Miner Rig Visual -->
+                  <div class="rig-stage my-3 py-3 rounded-2xl bg-slate-950/90 border border-amber-500/20 flex items-center justify-center overflow-hidden">
+                    <div class="asic-rig-3d relative w-36 sm:w-40 h-22 sm:h-24 rounded-xl bg-gradient-to-br from-slate-800 via-slate-900 to-black border-2 border-amber-500/50 shadow-2xl p-2 flex items-center justify-between">
+                      <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-lg bg-slate-950 border border-slate-700 flex items-center justify-center relative shrink-0">
+                        <div class="fan-blades w-9 h-9 sm:w-11 sm:h-11 rounded-full border-2 border-dashed border-amber-400/80 flex items-center justify-center text-amber-400 text-xs">
+                          <i class="fa-solid fa-fan"></i>
+                        </div>
+                      </div>
+                      <div class="flex-1 pl-2 flex flex-col justify-between h-full min-w-0">
+                        <div class="flex items-center justify-between">
+                          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                          <span class="text-[9px] font-bold mono text-amber-400">SHA-256</span>
+                        </div>
+                        <div class="flex items-center justify-center my-auto">
+                          <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-slate-950 font-extrabold flex items-center justify-center text-xs sm:text-sm shadow-md shadow-amber-500/30">
+                            <i class="fa-brands fa-bitcoin"></i>
+                          </div>
+                        </div>
+                        <div class="flex gap-1">
+                          <span class="h-1 flex-1 rounded bg-amber-500/70"></span>
+                          <span class="h-1 flex-1 rounded bg-emerald-500/70"></span>
+                        </div>
                       </div>
                     </div>
-                    <div class="flex gap-1">
-                      <span class="h-1 flex-1 rounded bg-amber-500/70"></span>
-                      <span class="h-1 flex-1 rounded bg-emerald-500/70"></span>
-                    </div>
                   </div>
+
+                  <h3 class="font-bold text-sm sm:text-base truncate"><%= plan.name %></h3>
+                  <div class="mt-1 text-xl sm:text-2xl font-extrabold mono text-slate-900 dark:text-white">
+                    <%= priceNum === 0 ? 'FREE' : '$' + priceNum.toLocaleString('en-US', { minimumFractionDigits: 2 }) %>
+                  </div>
+
+                  <ul class="mt-3.5 space-y-2 text-xs text-slate-600 dark:text-slate-300 border-t border-slate-200 dark:border-slate-800 pt-3">
+                    <li class="flex justify-between gap-2">
+                      <span>Hashrate:</span>
+                      <strong class="mono text-emerald-500"><%= parseFloat(plan.hashrate_ghs).toLocaleString() %> GH/s</strong>
+                    </li>
+                    <li class="flex justify-between gap-2">
+                      <span>Daily Profit (1%):</span>
+                      <strong class="mono text-amber-500">+$<%= dailyEarn.toFixed(2) %>/day</strong>
+                    </li>
+                    <li class="flex justify-between gap-2">
+                      <span>Monthly Profit (30%):</span>
+                      <strong class="mono text-emerald-400">+$<%= monthlyProfit.toFixed(2) %>/mo</strong>
+                    </li>
+                  </ul>
                 </div>
-              </div>
 
-              <h3 class="font-bold text-sm sm:text-base truncate"><%= plan.name %></h3>
-              <div class="mt-1 text-xl sm:text-2xl font-extrabold mono text-slate-900 dark:text-white">
-                <%= priceNum === 0 ? 'FREE' : '$' + priceNum.toLocaleString('en-US', { minimumFractionDigits: 2 }) %>
-              </div>
-
-              <ul class="mt-3.5 space-y-2 text-xs text-slate-600 dark:text-slate-300 border-t border-slate-200 dark:border-slate-800 pt-3">
-                <li class="flex justify-between gap-2">
-                  <span>Hashrate:</span>
-                  <strong class="mono text-emerald-500"><%= parseFloat(plan.hashrate_ghs).toLocaleString() %> GH/s</strong>
-                </li>
-                <li class="flex justify-between gap-2">
-                  <span>Daily Profit (1%):</span>
-                  <strong class="mono text-amber-500">+$<%= dailyEarn.toFixed(2) %>/day</strong>
-                </li>
-                <li class="flex justify-between gap-2">
-                  <span>Monthly Profit (30%):</span>
-                  <strong class="mono text-emerald-400">+$<%= monthlyProfit.toFixed(2) %>/mo</strong>
-                </li>
-              </ul>
-            </div>
-
-            <div class="mt-4 sm:mt-5">
-              <% if (priceNum === 0) { %>
-                <button disabled class="w-full py-2.5 rounded-xl bg-emerald-500/15 text-emerald-500 font-bold text-xs cursor-default">
-                  <i class="fa-solid fa-check-circle mr-1"></i>Active Welcome Rig
-                </button>
-              <% } else { %>
-                <button onclick="buyPlan(<%= plan.id %>, '<%= plan.name %>', <%= priceNum %>)" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-extrabold text-xs transition shadow-md">
-                  <i class="fa-brands fa-bitcoin mr-1"></i>Deploy BTC Miner
-                </button>
-              <% } %>
-            </div>
-          </div>
-        <% }) %>
-      </div>
-    </section>
-
-    <!-- Affiliate Referral Link & 1% Daily / 30% Monthly BTC Calculator -->
-    <section id="profit-calc" class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-6">
-        <h3 class="font-bold text-sm sm:text-base flex items-center gap-2">
-          <i class="fa-solid fa-share-nodes text-amber-500"></i> Partner Referral Program (10% Instant USDT)
-        </h3>
-        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          Share your invite link. Earn 10% instant withdrawable USDT whenever a referred miner deploys a Bitcoin rig.
-        </p>
-        <div class="mt-4 flex flex-col sm:flex-row gap-2">
-          <input type="text" id="ref-link" readonly value="<%= baseUrl %>/login?mode=register&ref=<%= user.referral_code %>" class="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-xs mono outline-none min-w-0" />
-          <button onclick="copyRef()" class="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs transition shrink-0">
-            <i class="fa-solid fa-copy mr-1"></i>Copy Link
-          </button>
-        </div>
-      </div>
-
-      <!-- 1% Daily / 30% Monthly Profit Calculator -->
-      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-6">
-        <h3 class="font-bold text-sm sm:text-base flex items-center gap-2">
-          <i class="fa-solid fa-calculator text-amber-500"></i> Bitcoin Mining Profit Calculator (1% Daily / 30% Monthly)
-        </h3>
-        <div class="mt-3 space-y-3">
-          <div>
-            <label class="text-xs text-slate-500 dark:text-slate-400">Rig Investment Amount (USDT)</label>
-            <input type="number" id="calc-amount" value="500" min="50" oninput="updateCalc()" class="mt-1 w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 mono font-bold text-sm outline-none focus:border-amber-500" />
-          </div>
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-            <div class="bg-slate-100 dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
-              <div class="text-[10px] text-slate-400">Daily Profit (1%)</div>
-              <div class="text-sm font-extrabold mono text-amber-500" id="calc-daily">+$5.00</div>
-            </div>
-            <div class="bg-slate-100 dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
-              <div class="text-[10px] text-slate-400">Monthly Profit (30%)</div>
-              <div class="text-sm font-extrabold mono text-emerald-500" id="calc-monthly">+$150.00</div>
-            </div>
-            <div class="bg-slate-100 dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
-              <div class="text-[10px] text-slate-400">30-Day Total Return</div>
-              <div class="text-sm font-extrabold mono text-white" id="calc-total">$650.00</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- User Support Tickets Section (Shows User's Tickets & Admin Replies) -->
-    <section id="support-section" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-6">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-        <div>
-          <h3 class="font-bold text-sm sm:text-base flex items-center gap-2">
-            <i class="fa-solid fa-headset text-amber-500"></i> My Support Tickets
-          </h3>
-          <p class="text-xs text-slate-500 dark:text-slate-400">Raise a ticket for deposit, withdrawal, rig, or account help and track live admin replies.</p>
-        </div>
-        <button type="button" onclick="openSupportModal()" class="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs transition flex items-center justify-center gap-1.5 shrink-0">
-          <i class="fa-solid fa-plus"></i><span>Raise Ticket</span>
-        </button>
-      </div>
-
-      <% if (myTickets.length === 0) { %>
-        <div class="py-6 text-center text-xs text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
-          No support tickets raised yet. Click <strong>Raise Ticket</strong> if you need assistance.
-        </div>
-      <% } else { %>
-        <div class="space-y-3">
-          <% myTickets.forEach(t => { 
-            const badgeClass = t.status === 'closed'
-              ? 'bg-slate-500/15 text-slate-400 border-slate-500/30'
-              : t.status === 'inprogress'
-                ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
-                : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30';
-          %>
-            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 space-y-2">
-              <div class="flex flex-wrap items-center justify-between gap-2">
-                <div class="flex flex-wrap items-center gap-2">
-                  <span class="mono text-xs font-bold text-amber-500"><%= t.ticket_code %></span>
-                  <span class="text-xs font-bold"><%= t.subject %></span>
-                  <span class="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300"><%= t.ticket_type %></span>
-                  <% if (t.unread_reply) { %>
-                    <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-500 text-white">NEW REPLY</span>
+                <div class="mt-4 sm:mt-5">
+                  <% if (priceNum === 0) { %>
+                    <button disabled class="w-full py-2.5 rounded-xl bg-emerald-500/15 text-emerald-500 font-bold text-xs cursor-default">
+                      <i class="fa-solid fa-check-circle mr-1"></i>Active Welcome Rig
+                    </button>
+                  <% } else { %>
+                    <button onclick="buyPlan(<%= plan.id %>, '<%= plan.name %>', <%= priceNum %>)" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-extrabold text-xs transition shadow-md">
+                      <i class="fa-brands fa-bitcoin mr-1"></i>Deploy BTC Miner
+                    </button>
                   <% } %>
                 </div>
-                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase border <%= badgeClass %>">
-                  <%= t.status === 'inprogress' ? 'In Progress' : t.status %>
-                </span>
               </div>
-              <p class="text-xs text-slate-600 dark:text-slate-300"><%= t.message %></p>
-              <% if (t.admin_reply && t.admin_reply.trim() !== '') { %>
-                <div class="mt-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/25 text-xs">
-                  <div class="font-bold text-amber-400 mb-0.5"><i class="fa-solid fa-user-shield mr-1"></i>Admin Response:</div>
-                  <div class="text-slate-200"><%= t.admin_reply %></div>
-                </div>
-              <% } else { %>
-                <div class="text-[11px] text-slate-500 italic">Awaiting admin reply...</div>
-              <% } %>
-            </div>
-          <% }) %>
-        </div>
-      <% } %>
-    </section>
+            <% }) %>
+          </div>
+        </section>
 
-    <!-- Admin Control Panel (Visible ONLY to Admin Role) -->
-    <% if (user.role === 'admin') { %>
-    <section id="admin-panel" class="bg-white dark:bg-slate-900 border-2 border-amber-500/40 rounded-2xl p-4 sm:p-6 space-y-6">
-      <div>
-        <h3 class="font-extrabold text-sm sm:text-base text-amber-500 flex items-center gap-2 mb-3">
-          <i class="fa-solid fa-shield-halved"></i> ADMIN TRANSACTION QUEUE (<%= adminPendingTx.length %> Pending)
-        </h3>
-        <% if (adminPendingTx.length === 0) { %>
-          <p class="text-xs text-slate-400">No pending withdrawals awaiting review.</p>
-        <% } else { %>
+        <!-- Affiliate Referral Link & 1% Daily / 30% Monthly BTC Calculator -->
+        <section id="profit-calc" class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-6">
+            <h3 class="font-bold text-sm sm:text-base flex items-center gap-2">
+              <i class="fa-solid fa-share-nodes text-amber-500"></i> Partner Referral Program (10% Instant USDT)
+            </h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              Share your invite link. Earn 10% instant withdrawable USDT whenever a referred miner deploys a Bitcoin rig.
+            </p>
+            <div class="mt-4 flex flex-col sm:flex-row gap-2">
+              <input type="text" id="ref-link" readonly value="<%= baseUrl %>/login?mode=register&ref=<%= user.referral_code %>" class="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-xs mono outline-none min-w-0" />
+              <button onclick="copyRef()" class="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs transition shrink-0">
+                <i class="fa-solid fa-copy mr-1"></i>Copy Link
+              </button>
+            </div>
+          </div>
+
+          <!-- 1% Daily / 30% Monthly Profit Calculator -->
+          <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-6">
+            <h3 class="font-bold text-sm sm:text-base flex items-center gap-2">
+              <i class="fa-solid fa-calculator text-amber-500"></i> Bitcoin Mining Profit Calculator (1% Daily / 30% Monthly)
+            </h3>
+            <div class="mt-3 space-y-3">
+              <div>
+                <label class="text-xs text-slate-500 dark:text-slate-400">Rig Investment Amount (USDT)</label>
+                <input type="number" id="calc-amount" value="500" min="50" oninput="updateCalc()" class="mt-1 w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 mono font-bold text-sm outline-none focus:border-amber-500" />
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <div class="bg-slate-100 dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                  <div class="text-[10px] text-slate-400">Daily Profit (1%)</div>
+                  <div class="text-sm font-extrabold mono text-amber-500" id="calc-daily">+$5.00</div>
+                </div>
+                <div class="bg-slate-100 dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                  <div class="text-[10px] text-slate-400">Monthly Profit (30%)</div>
+                  <div class="text-sm font-extrabold mono text-emerald-500" id="calc-monthly">+$150.00</div>
+                </div>
+                <div class="bg-slate-100 dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                  <div class="text-[10px] text-slate-400">30-Day Total Return</div>
+                  <div class="text-sm font-extrabold mono text-white" id="calc-total">$650.00</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Admin Control Panel (Visible ONLY to Admin Role) -->
+        <% if (user.role === 'admin') { %>
+        <section id="admin-panel" class="bg-white dark:bg-slate-900 border-2 border-amber-500/40 rounded-2xl p-4 sm:p-6 space-y-6">
+          <div>
+            <h3 class="font-extrabold text-sm sm:text-base text-amber-500 flex items-center gap-2 mb-3">
+              <i class="fa-solid fa-shield-halved"></i> ADMIN TRANSACTION QUEUE (<%= adminPendingTx.length %> Pending)
+            </h3>
+            <% if (adminPendingTx.length === 0) { %>
+              <p class="text-xs text-slate-400">No pending withdrawals awaiting review.</p>
+            <% } else { %>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs min-w-[600px]">
+                  <thead class="border-b border-slate-200 dark:border-slate-800 text-slate-400">
+                    <tr>
+                      <th class="py-2 pr-3">Miner</th>
+                      <th class="py-2 pr-3">Type</th>
+                      <th class="py-2 pr-3">Network</th>
+                      <th class="py-2 pr-3">Amount</th>
+                      <th class="py-2 pr-3">TX Hash / Wallet</th>
+                      <th class="py-2 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+                    <% adminPendingTx.forEach(tx => { %>
+                      <tr>
+                        <td class="py-3 pr-3 font-semibold"><%= tx.username %> (#<%= tx.public_uid %>)</td>
+                        <td class="py-3 pr-3 uppercase font-bold <%= tx.type === 'deposit' ? 'text-emerald-500' : 'text-amber-500' %>"><%= tx.type %></td>
+                        <td class="py-3 pr-3"><%= tx.network %></td>
+                        <td class="py-3 pr-3 mono font-bold">$<%= parseFloat(tx.amount_usdt).toFixed(2) %></td>
+                        <td class="py-3 pr-3 mono text-[11px] max-w-[180px] truncate"><%= tx.tx_hash || tx.wallet_address %></td>
+                        <td class="py-3 text-right space-x-1 whitespace-nowrap">
+                          <button onclick="adminTx(<%= tx.id %>, 'approve')" class="px-2.5 py-1 rounded bg-emerald-500 text-slate-950 font-bold">Approve</button>
+                          <button onclick="adminTx(<%= tx.id %>, 'reject')" class="px-2.5 py-1 rounded bg-rose-500 text-white font-bold">Reject</button>
+                        </td>
+                      </tr>
+                    <% }) %>
+                  </tbody>
+                </table>
+              </div>
+            <% } %>
+          </div>
+
+          <!-- Admin Support Ticket Management Desk -->
+          <div class="border-t border-slate-200 dark:border-slate-800 pt-5">
+            <h3 class="font-extrabold text-sm sm:text-base text-amber-500 flex items-center gap-2 mb-3">
+              <i class="fa-solid fa-tickets"></i> ADMIN SUPPORT TICKET DESK (<%= adminTickets.length %> Total)
+            </h3>
+            <% if (adminTickets.length === 0) { %>
+              <p class="text-xs text-slate-400">No user support tickets submitted yet.</p>
+            <% } else { %>
+              <div class="space-y-4">
+                <% adminTickets.forEach(at => { %>
+                  <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-3 text-xs">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <span class="mono font-bold text-amber-400"><%= at.ticket_code %></span>
+                        <span class="font-bold ml-2"><%= at.subject %></span>
+                        <span class="ml-2 px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-[10px]"><%= at.ticket_type %></span>
+                      </div>
+                      <div class="text-[11px] text-slate-400">
+                        From: <strong class="text-white"><%= at.username %></strong> (<span class="mono">UID #<%= at.public_uid %></span>)
+                      </div>
+                    </div>
+                    <p class="text-slate-300 bg-slate-900/70 p-3 rounded-lg border border-slate-800"><%= at.message %></p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-start">
+                      <div class="md:col-span-3">
+                        <label class="block text-[10px] font-semibold text-slate-400 mb-1">Ticket Status</label>
+                        <select id="ticket-status-<%= at.id %>" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 font-bold text-xs outline-none">
+                          <option value="open" <%= at.status === 'open' ? 'selected' : '' %>>Open</option>
+                          <option value="inprogress" <%= at.status === 'inprogress' ? 'selected' : '' %>>In Progress</option>
+                          <option value="closed" <%= at.status === 'closed' ? 'selected' : '' %>>Closed</option>
+                        </select>
+                      </div>
+                      <div class="md:col-span-7">
+                        <label class="block text-[10px] font-semibold text-slate-400 mb-1">Admin Response</label>
+                        <input type="text" id="ticket-reply-<%= at.id %>" value="<%= at.admin_reply || '' %>" placeholder="Write response for user..." class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs outline-none focus:border-amber-500" />
+                      </div>
+                      <div class="md:col-span-2 md:pt-5">
+                        <button type="button" onclick="updateAdminTicket(<%= at.id %>)" class="w-full py-2 px-3 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs transition">
+                          Save Reply
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                <% }) %>
+              </div>
+            <% } %>
+          </div>
+        </section>
+        <% } %>
+
+        <!-- Transaction History Ledger -->
+        <section id="ledger-history" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-6">
+          <h3 class="font-bold text-sm sm:text-base mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-clock-rotate-left text-amber-500"></i> Recent Mining & Ledger Activity
+          </h3>
           <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs min-w-[600px]">
+            <table class="w-full text-left text-xs min-w-[480px]">
               <thead class="border-b border-slate-200 dark:border-slate-800 text-slate-400">
                 <tr>
-                  <th class="py-2 pr-3">Miner</th>
-                  <th class="py-2 pr-3">Type</th>
-                  <th class="py-2 pr-3">Network</th>
-                  <th class="py-2 pr-3">Amount</th>
-                  <th class="py-2 pr-3">TX Hash / Wallet</th>
-                  <th class="py-2 text-right">Action</th>
+                  <th class="py-2.5 pr-3">Type</th>
+                  <th class="py-2.5 pr-3">Network</th>
+                  <th class="py-2.5 pr-3">Amount (USDT)</th>
+                  <th class="py-2.5 pr-3">Status</th>
+                  <th class="py-2.5 text-right">Date</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
-                <% adminPendingTx.forEach(tx => { %>
+                <% if (transactions.length === 0) { %>
+                  <tr><td colspan="5" class="py-6 text-center text-slate-400">No ledger transactions recorded yet.</td></tr>
+                <% } %>
+                <% transactions.forEach(tx => { %>
                   <tr>
-                    <td class="py-3 pr-3 font-semibold"><%= tx.username %> (#<%= tx.public_uid %>)</td>
-                    <td class="py-3 pr-3 uppercase font-bold <%= tx.type === 'deposit' ? 'text-emerald-500' : 'text-amber-500' %>"><%= tx.type %></td>
-                    <td class="py-3 pr-3"><%= tx.network %></td>
-                    <td class="py-3 pr-3 mono font-bold">$<%= parseFloat(tx.amount_usdt).toFixed(2) %></td>
-                    <td class="py-3 pr-3 mono text-[11px] max-w-[180px] truncate"><%= tx.tx_hash || tx.wallet_address %></td>
-                    <td class="py-3 text-right space-x-1 whitespace-nowrap">
-                      <button onclick="adminTx(<%= tx.id %>, 'approve')" class="px-2.5 py-1 rounded bg-emerald-500 text-slate-950 font-bold">Approve</button>
-                      <button onclick="adminTx(<%= tx.id %>, 'reject')" class="px-2.5 py-1 rounded bg-rose-500 text-white font-bold">Reject</button>
+                    <td class="py-3 pr-3 font-bold uppercase"><%= tx.type.replace('_', ' ') %></td>
+                    <td class="py-3 pr-3 text-slate-400"><%= tx.network %></td>
+                    <td class="py-3 pr-3 mono font-bold">$<%= parseFloat(tx.amount_usdt).toFixed(4) %></td>
+                    <td class="py-3 pr-3">
+                      <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase
+                        <%= tx.status === 'completed' || tx.status === 'approved' ? 'bg-emerald-500/15 text-emerald-500' : 
+                            tx.status === 'pending' ? 'bg-amber-500/15 text-amber-500' : 'bg-rose-500/15 text-rose-500' %>">
+                        <%= tx.status %>
+                      </span>
                     </td>
+                    <td class="py-3 text-right text-slate-400 whitespace-nowrap"><%= new Date(tx.created_at).toLocaleDateString() %></td>
                   </tr>
                 <% }) %>
               </tbody>
             </table>
           </div>
-        <% } %>
+        </section>
+
       </div>
 
-      <!-- Admin Support Ticket Management Desk -->
-      <div class="border-t border-slate-200 dark:border-slate-800 pt-5">
-        <h3 class="font-extrabold text-sm sm:text-base text-amber-500 flex items-center gap-2 mb-3">
-          <i class="fa-solid fa-tickets"></i> ADMIN SUPPORT TICKET DESK (<%= adminTickets.length %> Total)
-        </h3>
-        <% if (adminTickets.length === 0) { %>
-          <p class="text-xs text-slate-400">No user support tickets submitted yet.</p>
-        <% } else { %>
-          <div class="space-y-4">
-            <% adminTickets.forEach(at => { %>
-              <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-3 text-xs">
-                <div class="flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <span class="mono font-bold text-amber-400"><%= at.ticket_code %></span>
-                    <span class="font-bold ml-2"><%= at.subject %></span>
-                    <span class="ml-2 px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-[10px]"><%= at.ticket_type %></span>
-                  </div>
-                  <div class="text-[11px] text-slate-400">
-                    From: <strong class="text-white"><%= at.username %></strong> (<span class="mono">UID #<%= at.public_uid %></span>)
-                  </div>
-                </div>
-                <p class="text-slate-300 bg-slate-900/70 p-3 rounded-lg border border-slate-800"><%= at.message %></p>
-
-                <div class="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-start">
-                  <div class="md:col-span-3">
-                    <label class="block text-[10px] font-semibold text-slate-400 mb-1">Ticket Status</label>
-                    <select id="ticket-status-<%= at.id %>" class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 font-bold text-xs outline-none">
-                      <option value="open" <%= at.status === 'open' ? 'selected' : '' %>>Open</option>
-                      <option value="inprogress" <%= at.status === 'inprogress' ? 'selected' : '' %>>In Progress</option>
-                      <option value="closed" <%= at.status === 'closed' ? 'selected' : '' %>>Closed</option>
-                    </select>
-                  </div>
-                  <div class="md:col-span-7">
-                    <label class="block text-[10px] font-semibold text-slate-400 mb-1">Admin Response</label>
-                    <input type="text" id="ticket-reply-<%= at.id %>" value="<%= at.admin_reply || '' %>" placeholder="Write response for user..." class="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs outline-none focus:border-amber-500" />
-                  </div>
-                  <div class="md:col-span-2 md:pt-5">
-                    <button type="button" onclick="updateAdminTicket(<%= at.id %>)" class="w-full py-2 px-3 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs transition">
-                      Save Reply
-                    </button>
-                  </div>
-                </div>
-              </div>
-            <% }) %>
+      <!-- ==================== VIEW 2: DEDICATED SUPPORT TICKETS SECTION ==================== -->
+      <!-- Hidden on Home Dashboard; Shown ONLY when user clicks "Support Tickets" in Left Nav or Top Support button -->
+      <div id="view-support" class="hidden space-y-5 sm:space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-amber-500/25 rounded-2xl p-4 sm:p-6">
+          <div>
+            <div class="inline-flex items-center gap-1.5 text-[11px] font-bold text-amber-500 uppercase tracking-wider mb-1">
+              <i class="fa-solid fa-headset"></i> 24/7 Miner Support Center
+            </div>
+            <h2 class="text-lg sm:text-2xl font-extrabold">Support Tickets & Help Desk</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Raise a ticket below and track live status updates and responses from our support team.</p>
           </div>
-        <% } %>
-      </div>
-    </section>
-    <% } %>
+          <button type="button" onclick="showDashboardView('mining-console')" class="px-4 py-2.5 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-amber-500 hover:text-slate-950 font-bold text-xs transition flex items-center justify-center gap-2 shrink-0">
+            <i class="fa-solid fa-arrow-left"></i>
+            <span>Back to Mining Dashboard</span>
+          </button>
+        </div>
 
-    <!-- Transaction History Ledger -->
-    <section id="ledger-history" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-6">
-      <h3 class="font-bold text-sm sm:text-base mb-4 flex items-center gap-2">
-        <i class="fa-solid fa-clock-rotate-left text-amber-500"></i> Recent Mining & Ledger Activity
-      </h3>
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs min-w-[480px]">
-          <thead class="border-b border-slate-200 dark:border-slate-800 text-slate-400">
-            <tr>
-              <th class="py-2.5 pr-3">Type</th>
-              <th class="py-2.5 pr-3">Network</th>
-              <th class="py-2.5 pr-3">Amount (USDT)</th>
-              <th class="py-2.5 pr-3">Status</th>
-              <th class="py-2.5 text-right">Date</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
-            <% if (transactions.length === 0) { %>
-              <tr><td colspan="5" class="py-6 text-center text-slate-400">No ledger transactions recorded yet.</td></tr>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
+          <!-- Left Column: Raise New Ticket Form -->
+          <div class="lg:col-span-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 h-fit">
+            <h3 class="font-extrabold text-base flex items-center gap-2 mb-4">
+              <i class="fa-solid fa-pen-to-square text-amber-500"></i> Raise a New Ticket
+            </h3>
+
+            <div class="space-y-4 text-xs">
+              <div>
+                <label class="font-semibold text-slate-400">Subject Line</label>
+                <input type="text" id="tkt-subject" placeholder="e.g. BEP20 Deposit TXID or Rig Inquiry" class="mt-1 w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 outline-none focus:border-amber-500" />
+              </div>
+
+              <div>
+                <label class="font-semibold text-slate-400">Ticket Type</label>
+                <select id="tkt-type" class="mt-1 w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 font-bold outline-none focus:border-amber-500">
+                  <option value="Deposit & TXID">Deposit & TXID</option>
+                  <option value="Withdrawal">Withdrawal</option>
+                  <option value="Mining Rig">Mining Rig</option>
+                  <option value="Referral / Account">Referral / Account</option>
+                  <option value="General Support">General Support</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="font-semibold text-slate-400">Message</label>
+                <textarea id="tkt-message" rows="5" placeholder="Describe your issue clearly (include TXID, wallet address, or rig name if applicable)..." class="mt-1 w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 outline-none focus:border-amber-500"></textarea>
+              </div>
+
+              <button type="button" id="raise-tkt-btn" onclick="submitSupportTicket()" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-extrabold text-xs sm:text-sm transition flex items-center justify-center gap-2 shadow-lg">
+                <i class="fa-solid fa-paper-plane"></i>
+                <span>Raise Ticket</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Right Column: User's Ticket History & Admin Responses -->
+          <div class="lg:col-span-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-extrabold text-base flex items-center gap-2">
+                <i class="fa-solid fa-inbox text-amber-500"></i> Your Raised Tickets (<%= myTickets.length %>)
+              </h3>
+            </div>
+
+            <% if (myTickets.length === 0) { %>
+              <div class="py-12 text-center text-xs text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
+                <i class="fa-solid fa-ticket text-2xl text-slate-600 mb-2 block"></i>
+                No support tickets raised yet. Use the form on the left to submit your first ticket.
+              </div>
+            <% } else { %>
+              <div class="space-y-3.5">
+                <% myTickets.forEach(t => { 
+                  const badgeClass = t.status === 'closed'
+                    ? 'bg-slate-500/15 text-slate-400 border-slate-500/30'
+                    : t.status === 'inprogress'
+                      ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
+                      : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30';
+                %>
+                  <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-950/90 border border-slate-200 dark:border-slate-800 space-y-2.5">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                      <div class="flex flex-wrap items-center gap-2">
+                        <span class="mono text-xs font-extrabold text-amber-500"><%= t.ticket_code %></span>
+                        <span class="text-xs font-bold"><%= t.subject %></span>
+                        <span class="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300"><%= t.ticket_type %></span>
+                        <% if (t.unread_reply) { %>
+                          <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-500 text-white">NEW REPLY</span>
+                        <% } %>
+                      </div>
+                      <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase border <%= badgeClass %>">
+                        <%= t.status === 'inprogress' ? 'In Progress' : t.status %>
+                      </span>
+                    </div>
+
+                    <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed"><%= t.message %></p>
+
+                    <% if (t.admin_reply && t.admin_reply.trim() !== '') { %>
+                      <div class="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs">
+                        <div class="font-extrabold text-amber-400 mb-1 flex items-center gap-1.5">
+                          <i class="fa-solid fa-user-shield"></i> Admin Response
+                        </div>
+                        <div class="text-slate-800 dark:text-slate-100 leading-relaxed"><%= t.admin_reply %></div>
+                      </div>
+                    <% } else { %>
+                      <div class="text-[11px] text-slate-500 italic flex items-center gap-1.5">
+                        <i class="fa-regular fa-clock"></i> Awaiting admin response...
+                      </div>
+                    <% } %>
+
+                    <div class="text-[10px] text-slate-500 text-right">
+                      Updated: <%= new Date(t.updated_at).toLocaleString() %>
+                    </div>
+                  </div>
+                <% }) %>
+              </div>
             <% } %>
-            <% transactions.forEach(tx => { %>
-              <tr>
-                <td class="py-3 pr-3 font-bold uppercase"><%= tx.type.replace('_', ' ') %></td>
-                <td class="py-3 pr-3 text-slate-400"><%= tx.network %></td>
-                <td class="py-3 pr-3 mono font-bold">$<%= parseFloat(tx.amount_usdt).toFixed(4) %></td>
-                <td class="py-3 pr-3">
-                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase
-                    <%= tx.status === 'completed' || tx.status === 'approved' ? 'bg-emerald-500/15 text-emerald-500' : 
-                        tx.status === 'pending' ? 'bg-amber-500/15 text-amber-500' : 'bg-rose-500/15 text-rose-500' %>">
-                    <%= tx.status %>
-                  </span>
-                </td>
-                <td class="py-3 text-right text-slate-400 whitespace-nowrap"><%= new Date(tx.created_at).toLocaleDateString() %></td>
-              </tr>
-            <% }) %>
-          </tbody>
-        </table>
-      </div>
-    </section>
-  </main>
-
-  <!-- RAISE SUPPORT TICKET MODAL -->
-  <div id="support-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl my-auto max-h-[92vh] overflow-y-auto">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="font-extrabold text-base sm:text-lg flex items-center gap-2">
-          <i class="fa-solid fa-headset text-amber-500"></i> Raise Support Ticket
-        </h3>
-        <button onclick="closeModal('support-modal')" class="text-slate-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+          </div>
+        </div>
       </div>
 
-      <div class="space-y-4 text-xs">
-        <div>
-          <label class="font-semibold text-slate-400">Subject Line</label>
-          <input type="text" id="tkt-subject" placeholder="e.g. TXID verification or rig deployment question" class="mt-1 w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 outline-none focus:border-amber-500" />
-        </div>
-
-        <div>
-          <label class="font-semibold text-slate-400">Ticket Type</label>
-          <select id="tkt-type" class="mt-1 w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 font-bold outline-none focus:border-amber-500">
-            <option value="Deposit & TXID">Deposit & TXID</option>
-            <option value="Withdrawal">Withdrawal</option>
-            <option value="Mining Rig">Mining Rig</option>
-            <option value="Referral / Account">Referral / Account</option>
-            <option value="General Support">General Support</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="font-semibold text-slate-400">Message</label>
-          <textarea id="tkt-message" rows="4" placeholder="Write full details including your TXID or issue..." class="mt-1 w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 outline-none focus:border-amber-500"></textarea>
-        </div>
-
-        <button type="button" id="raise-tkt-btn" onclick="submitSupportTicket()" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-extrabold text-xs sm:text-sm transition flex items-center justify-center gap-2 shadow-lg">
-          <i class="fa-solid fa-paper-plane"></i>
-          <span>Raise Ticket</span>
-        </button>
-      </div>
-    </div>
+    </main>
   </div>
 
   <!-- LIVE ON-CHAIN DEPOSIT MODAL (Default: BEP20) -->
@@ -788,7 +836,7 @@
       })
       .catch(() => {});
 
-    // 3. Left-Side Slide-Over Hamburger Drawer Controls
+    // 3. Left Navigation Drawer Controls (Mobile Drawer; Always Visible on lg+)
     function openLeftDrawer() {
       document.getElementById('left-drawer-backdrop').classList.remove('hidden');
       document.getElementById('left-drawer').classList.remove('-translate-x-full');
@@ -798,7 +846,61 @@
       document.getElementById('left-drawer-backdrop').classList.add('hidden');
     }
 
-    // 4. Dark / Light Theme Toggle
+    // 4. View Switcher: Main Mining Dashboard vs Dedicated Support Tickets View
+    function setActiveNav(navId) {
+      document.querySelectorAll('.nav-item').forEach(btn => {
+        btn.className = 'nav-item w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-amber-500/10 hover:text-amber-400 transition text-left';
+      });
+      const activeEl = document.getElementById(navId);
+      if (activeEl) {
+        activeEl.className = 'nav-item w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-amber-500/15 text-amber-500 border border-amber-500/30 transition text-left';
+      }
+    }
+
+    function showDashboardView(sectionId) {
+      closeLeftDrawer();
+      document.getElementById('view-support').classList.add('hidden');
+      document.getElementById('view-dashboard').classList.remove('hidden');
+      document.getElementById('topbar-title').textContent = 'GOLDEN HASH MINER';
+
+      const navMap = {
+        'mining-console': 'nav-mining',
+        'btc-rigs': 'nav-rigs',
+        'profit-calc': 'nav-calc',
+        'ledger-history': 'nav-ledger',
+        'admin-panel': 'nav-admin'
+      };
+      setActiveNav(navMap[sectionId] || 'nav-mining');
+
+      if (sectionId) {
+        const target = document.getElementById(sectionId);
+        if (target) target.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+
+    async function showSupportView() {
+      closeLeftDrawer();
+      document.getElementById('view-dashboard').classList.add('hidden');
+      document.getElementById('view-support').classList.remove('hidden');
+      document.getElementById('topbar-title').textContent = 'SUPPORT TICKETS';
+      setActiveNav('nav-support');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      // Mark unread admin replies as read
+      try {
+        await fetch('/api/tickets/mark-read', { method: 'POST' });
+        const hb = document.getElementById('header-unread-badge');
+        if (hb) hb.remove();
+        document.querySelectorAll('.drawer-unread-badge').forEach(el => el.remove());
+      } catch (_) {}
+    }
+
+    // Open Support tab automatically if ?tab=support is in URL (e.g. after raising a ticket)
+    if (new URLSearchParams(window.location.search).get('tab') === 'support') {
+      showSupportView();
+    }
+
+    // 5. Dark / Light Theme Toggle
     const htmlEl = document.documentElement;
     function syncThemeIcon() {
       const isDark = htmlEl.classList.contains('dark');
@@ -871,21 +973,6 @@
       document.getElementById('dep-network').value = 'USDT-BEP20';
       updateDepositAddress();
       openModal('deposit-modal');
-    }
-    function openSupportModal() {
-      openModal('support-modal');
-    }
-    async function markRepliesRead() {
-      try {
-        await fetch('/api/tickets/mark-read', { method: 'POST' });
-        const hb = document.getElementById('header-unread-badge');
-        if (hb) hb.remove();
-        document.querySelectorAll('.drawer-unread-badge').forEach(el => el.remove());
-      } catch (_) {}
-    }
-    function openSupportSectionAndMarkRead() {
-      markRepliesRead();
-      document.getElementById('support-section').scrollIntoView({ behavior: 'smooth' });
     }
     function copyVault() {
       navigator.clipboard.writeText(document.getElementById('vault-address').textContent);
@@ -978,6 +1065,7 @@
       setTimeout(() => location.reload(), 1000);
     }
 
+    // User Support Ticket Submission (Reloads directly into ?tab=support)
     async function submitSupportTicket() {
       const btn = document.getElementById('raise-tkt-btn');
       const subject = document.getElementById('tkt-subject').value.trim();
@@ -993,9 +1081,10 @@
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
-        closeModal('support-modal');
         showToast(data.message);
-        setTimeout(() => location.reload(), 800);
+        setTimeout(() => {
+          window.location.href = '/dashboard?tab=support';
+        }, 700);
       } catch (err) {
         showToast(err.message, true);
       } finally {
@@ -1003,6 +1092,7 @@
       }
     }
 
+    // Admin Ticket Status & Response Update
     async function updateAdminTicket(ticketId) {
       const status = document.getElementById(`ticket-status-${ticketId}`).value;
       const adminReply = document.getElementById(`ticket-reply-${ticketId}`).value;
