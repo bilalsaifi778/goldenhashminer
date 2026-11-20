@@ -261,7 +261,7 @@
       <!-- Toast Notification Banner -->
       <div id="toast" class="hidden fixed bottom-4 right-4 left-4 sm:left-auto sm:max-w-sm z-50 px-4 py-3.5 rounded-xl shadow-2xl font-bold text-xs flex items-center gap-2.5 border transition-all"></div>
 
-      <!-- ==================== TAB 1: DASHBOARD ==================== -->
+      <!-- ==================== TAB 1: DASHBOARD (Includes Live Console, 3D Bitcoin ASIC Rigs & Calculator) ==================== -->
       <div id="tab-dashboard" class="space-y-5 sm:space-y-6">
         <!-- Top KPI Stat Cards -->
         <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3.5 sm:gap-4">
@@ -357,6 +357,96 @@
                 <span>COLLECT TO WALLET</span>
               </button>
             </div>
+          </div>
+        </section>
+
+        <!-- Bitcoin ASIC Rigs Section Directly Visible on Dashboard -->
+        <section id="dashboard-rigs" class="space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h2 class="text-lg sm:text-xl font-extrabold flex items-center gap-2">
+                <i class="fa-solid fa-server text-amber-500"></i> Golden Hash 3D Bitcoin ASIC Rigs
+              </h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Free welcome rig + $50 to $10,000 rigs • Every rig earns <strong class="text-amber-500">1% daily profit</strong> and <strong class="text-emerald-500">30% monthly profit</strong> (30 days)</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <% plans.forEach(plan => { 
+              const priceNum = parseFloat(plan.price_usdt);
+              const dailyEarn = priceNum === 0 ? 0.10 : (priceNum * 0.01);
+              const monthlyProfit = priceNum === 0 ? 3.00 : (priceNum * 0.30);
+              const isHighlighted = plan.tier_badge === 'POPULAR' || plan.tier_badge === 'WHALE VIP';
+            %>
+              <div class="card-3d bg-white dark:bg-slate-900 border <%= isHighlighted ? 'border-amber-500 ring-2 ring-amber-500/25' : 'border-slate-200 dark:border-slate-800' %> rounded-2xl p-4 sm:p-5 flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between gap-2 mb-2">
+                    <span class="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/30">
+                      <%= plan.tier_badge %>
+                    </span>
+                    <span class="text-xs text-slate-400 font-semibold"><%= plan.duration_days %> Days</span>
+                  </div>
+
+                  <!-- 3D Bitcoin ASIC Miner Rig Visual -->
+                  <div class="rig-stage my-3 py-3 rounded-2xl bg-slate-950/90 border border-amber-500/20 flex items-center justify-center overflow-hidden">
+                    <div class="asic-rig-3d relative w-36 sm:w-40 h-22 sm:h-24 rounded-xl bg-gradient-to-br from-slate-800 via-slate-900 to-black border-2 border-amber-500/50 shadow-2xl p-2 flex items-center justify-between">
+                      <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-lg bg-slate-950 border border-slate-700 flex items-center justify-center relative shrink-0">
+                        <div class="fan-blades w-9 h-9 sm:w-11 sm:h-11 rounded-full border-2 border-dashed border-amber-400/80 flex items-center justify-center text-amber-400 text-xs">
+                          <i class="fa-solid fa-fan"></i>
+                        </div>
+                      </div>
+                      <div class="flex-1 pl-2 flex flex-col justify-between h-full min-w-0">
+                        <div class="flex items-center justify-between">
+                          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                          <span class="text-[9px] font-bold mono text-amber-400">SHA-256</span>
+                        </div>
+                        <div class="flex items-center justify-center my-auto">
+                          <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-slate-950 font-extrabold flex items-center justify-center text-xs sm:text-sm shadow-md shadow-amber-500/30">
+                            <i class="fa-brands fa-bitcoin"></i>
+                          </div>
+                        </div>
+                        <div class="flex gap-1">
+                          <span class="h-1 flex-1 rounded bg-amber-500/70"></span>
+                          <span class="h-1 flex-1 rounded bg-emerald-500/70"></span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <h3 class="font-bold text-sm sm:text-base truncate"><%= plan.name %></h3>
+                  <div class="mt-1 text-xl sm:text-2xl font-extrabold mono text-slate-900 dark:text-white">
+                    <%= priceNum === 0 ? 'FREE' : '$' + priceNum.toLocaleString('en-US', { minimumFractionDigits: 2 }) %>
+                  </div>
+
+                  <ul class="mt-3.5 space-y-2 text-xs text-slate-600 dark:text-slate-300 border-t border-slate-200 dark:border-slate-800 pt-3">
+                    <li class="flex justify-between gap-2">
+                      <span>Hashrate:</span>
+                      <strong class="mono text-emerald-500"><%= parseFloat(plan.hashrate_ghs).toLocaleString() %> GH/s</strong>
+                    </li>
+                    <li class="flex justify-between gap-2">
+                      <span>Daily Profit (1%):</span>
+                      <strong class="mono text-amber-500">+$<%= dailyEarn.toFixed(2) %>/day</strong>
+                    </li>
+                    <li class="flex justify-between gap-2">
+                      <span>Monthly Profit (30%):</span>
+                      <strong class="mono text-emerald-400">+$<%= monthlyProfit.toFixed(2) %>/mo</strong>
+                    </li>
+                  </ul>
+                </div>
+
+                <div class="mt-4 sm:mt-5">
+                  <% if (priceNum === 0) { %>
+                    <button disabled class="w-full py-2.5 rounded-xl bg-emerald-500/15 text-emerald-500 font-bold text-xs cursor-default">
+                      <i class="fa-solid fa-check-circle mr-1"></i>Active Welcome Rig
+                    </button>
+                  <% } else { %>
+                    <button onclick="buyPlan(<%= plan.id %>, '<%= plan.name %>', <%= priceNum %>)" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-extrabold text-xs transition shadow-md">
+                      <i class="fa-brands fa-bitcoin mr-1"></i>Deploy BTC Miner
+                    </button>
+                  <% } %>
+                </div>
+              </div>
+            <% }) %>
           </div>
         </section>
 
@@ -590,7 +680,6 @@
             </div>
           </div>
 
-          <!-- Team Summary Strip -->
           <% 
             const activeTeamCount = referralTeam.filter(m => parseInt(m.active_rigs_count) > 0).length;
             const totalTeamHashrate = referralTeam.reduce((acc, m) => acc + parseFloat(m.total_hashrate_ghs || 0), 0);
@@ -611,7 +700,6 @@
           </div>
         </div>
 
-        <!-- Team Members Table & Status -->
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-6">
           <h3 class="font-bold text-sm sm:text-base mb-4 flex items-center gap-2">
             <i class="fa-solid fa-users text-amber-500"></i> Direct Team Structure (<%= totalTeamHashrate.toLocaleString() %> Combined GH/s)
@@ -684,7 +772,6 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
-          <!-- Raise Ticket Form -->
           <div class="lg:col-span-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 h-fit">
             <h3 class="font-extrabold text-base flex items-center gap-2 mb-4">
               <i class="fa-solid fa-pen-to-square text-amber-500"></i> Raise a New Ticket
@@ -719,7 +806,6 @@
             </div>
           </div>
 
-          <!-- User Ticket History & Admin Responses -->
           <div class="lg:col-span-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6">
             <h3 class="font-extrabold text-base flex items-center gap-2 mb-4">
               <i class="fa-solid fa-inbox text-amber-500"></i> Your Raised Tickets (<%= myTickets.length %>)
