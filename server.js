@@ -25,7 +25,7 @@ const TRC20_USDT_CONTRACT = 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t';
 const BEP20_USDT_CONTRACT = '0x55d398326f99059ff775485246999027b3197955';
 const ERC20_TRANSFER_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
 
-// Receiving Wallets (Replace via Render Environment Variables later)
+// Receiving Wallets (BEP20 first as default)
 const DEPOSIT_WALLETS = {
   'USDT-BEP20': process.env.WALLET_BEP20 || '0x71CGoldenHashVaultBEP20DepositAddr992',
   'USDT-TRC20': process.env.WALLET_TRC20 || 'TX9kGoldenHashVaultTRC20DepositAddr889'
@@ -37,6 +37,19 @@ const DEPOSIT_WALLETS = {
       ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL;
       ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(100) UNIQUE;
       ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+
+      CREATE TABLE IF NOT EXISTS support_tickets (
+        id SERIAL PRIMARY KEY,
+        ticket_code VARCHAR(12) UNIQUE NOT NULL,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        subject VARCHAR(160) NOT NULL,
+        ticket_type VARCHAR(40) NOT NULL,
+        message TEXT NOT NULL,
+        admin_reply TEXT DEFAULT '',
+        status VARCHAR(20) DEFAULT 'open',
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      );
     `);
   } catch (e) {
     console.warn('Startup schema check:', e.message);
@@ -446,7 +459,14 @@ app.get('/dashboard', requireAuth, async (req, res) => {
     );
     const refCountRes = await pool.query('SELECT COUNT(*) FROM users WHERE referred_by = $1', [req.session.userId]);
 
+    // User's own support tickets
+    const myTicketsRes = await pool.query(
+      'SELECT * FROM support_tickets WHERE user_id = $1 ORDER BY updated_at DESC LIMIT 20',
+      [req.session.userId]
+    );
+
     let adminPendingTx = [];
+    let adminTickets = [];
     if (state.user.role === 'admin') {
       const pendingRes = await pool.query(
         `SELECT t.*, u.username, u.public_uid 
@@ -454,6 +474,13 @@ app.get('/dashboard', requireAuth, async (req, res) => {
          WHERE t.status = 'pending' ORDER BY t.created_at ASC`
       );
       adminPendingTx = pendingRes.rows;
+
+      const allTicketsRes = await pool.query(
+        `SELECT st.*, u.username, u.public_uid, u.email
+         FROM support_tickets st JOIN users u ON st.user_id = u.id
+         ORDER BY CASE st.status WHEN 'open' THEN 1 WHEN 'inprogress' THEN 2 ELSE 3 END, st.updated_at DESC`
+      );
+      adminTickets = allTicketsRes.rows;
     }
 
     res.render('dashboard', {
@@ -464,8 +491,10 @@ app.get('/dashboard', requireAuth, async (req, res) => {
       perSecondRate: state.perSecondRate,
       plans: plansRes.rows,
       transactions: txRes.rows,
+      myTickets: myTicketsRes.rows,
       referralCount: parseInt(refCountRes.rows[0].count),
       adminPendingTx,
+      adminTickets,
       depositWallets: DEPOSIT_WALLETS,
       baseUrl: `${req.protocol}://${req.get('host')}`
     });
@@ -524,7 +553,7 @@ app.post('/api/plans/buy', requireAuth, async (req, res) => {
     if (planRes.rows.length === 0) throw new Error('Plan unavailable');
     const plan = planRes.rows[0];
     const price = parseFloat(plan.price_usdt);
-    if (price <= 0) throw new Error('Invalid plan price');
+    if (price <= 0) throw new Error('Free Welcome BTC Rig is already active on your account');
 
     const userRes = await client.query('SELECT * FROM users WHERE id = $1 FOR UPDATE', [req.session.userId]);
     const user = userRes.rows[0];
@@ -575,7 +604,8 @@ app.post('/api/plans/buy', requireAuth, async (req, res) => {
 });
 
 app.post('/api/deposit/verify', requireAuth, async (req, res) => {
-  const { network, txHash } = req.body;
+  const network = req.body.network || 'USDT-BEP20';
+  const { txHash } = req.body;
   if (!txHash || txHash.trim().length < 20) {
     return res.status(400).json({ error: 'Please paste a valid blockchain Transaction Hash (TXID).' });
   }
@@ -669,6 +699,63 @@ app.post('/api/withdraw', requireAuth, async (req, res) => {
   }
 });
 
+// ==================== SUPPORT TICKET APIs ====================
+
+// User Raises a New Support Ticket
+app.post('/api/tickets', requireAuth, async (req, res) => {
+  try {
+    const { subject, ticketType, message } = req.body;
+    if (!subject || subject.trim().length < 3) {
+      return res.status(400).json({ error: 'Please enter a clear subject line.' });
+    }
+    if (!ticketType || ticketType.trim().length < 2) {
+      return res.status(400).json({ error: 'Please select a ticket type.' });
+    }
+    if (!message || message.trim().length < 8) {
+      return res.status(400).json({ error: 'Please describe your issue in at least 8 characters.' });
+    }
+
+    const ticketCode = 'TKT-' + Math.floor(100000 + Math.random() * 900000);
+    await pool.query(
+      `INSERT INTO support_tickets (ticket_code, user_id, subject, ticket_type, message, status)
+       VALUES ($1, $2, $3, $4, $5, 'open')`,
+      [ticketCode, req.session.userId, subject.trim(), ticketType.trim(), message.trim()]
+    );
+
+    res.json({ success: true, message: `Ticket ${ticketCode} raised and sent to Admin!` });
+  } catch (err) {
+    console.error('Ticket create error:', err);
+    res.status(500).json({ error: 'Failed to submit support ticket.' });
+  }
+});
+
+// Admin Updates Ticket Status & Response
+app.post('/api/admin/tickets/:id', requireAdmin, async (req, res) => {
+  try {
+    const ticketId = req.params.id;
+    const { status, adminReply } = req.body;
+    const validStatuses = ['open', 'inprogress', 'closed'];
+    const nextStatus = validStatuses.includes(status) ? status : 'open';
+
+    const updated = await pool.query(
+      `UPDATE support_tickets
+       SET status = $1, admin_reply = $2, updated_at = NOW()
+       WHERE id = $3 RETURNING id, ticket_code, status`,
+      [nextStatus, (adminReply || '').trim(), ticketId]
+    );
+
+    if (updated.rows.length === 0) {
+      return res.status(404).json({ error: 'Ticket not found.' });
+    }
+
+    res.json({ success: true, message: `Ticket ${updated.rows[0].ticket_code} updated (${nextStatus}).` });
+  } catch (err) {
+    console.error('Admin ticket update error:', err);
+    res.status(500).json({ error: 'Failed to update ticket.' });
+  }
+});
+
+// Admin Approves or Rejects Pending Withdrawals/Deposits
 app.post('/api/admin/tx/:id', requireAdmin, async (req, res) => {
   const { action } = req.body;
   const txId = req.params.id;
