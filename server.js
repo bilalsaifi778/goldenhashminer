@@ -46,10 +46,13 @@ const DEPOSIT_WALLETS = {
         ticket_type VARCHAR(40) NOT NULL,
         message TEXT NOT NULL,
         admin_reply TEXT DEFAULT '',
+        unread_reply BOOLEAN DEFAULT FALSE,
         status VARCHAR(20) DEFAULT 'open',
         created_at TIMESTAMPTZ DEFAULT NOW(),
         updated_at TIMESTAMPTZ DEFAULT NOW()
       );
+
+      ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS unread_reply BOOLEAN DEFAULT FALSE;
     `);
   } catch (e) {
     console.warn('Startup schema check:', e.message);
@@ -459,11 +462,14 @@ app.get('/dashboard', requireAuth, async (req, res) => {
     );
     const refCountRes = await pool.query('SELECT COUNT(*) FROM users WHERE referred_by = $1', [req.session.userId]);
 
-    // User's own support tickets
     const myTicketsRes = await pool.query(
       'SELECT * FROM support_tickets WHERE user_id = $1 ORDER BY updated_at DESC LIMIT 20',
       [req.session.userId]
     );
+
+    const unreadRepliesCount = myTicketsRes.rows.filter(
+      (t) => t.unread_reply && t.admin_reply && t.admin_reply.trim() !== ''
+    ).length;
 
     let adminPendingTx = [];
     let adminTickets = [];
@@ -492,6 +498,7 @@ app.get('/dashboard', requireAuth, async (req, res) => {
       plans: plansRes.rows,
       transactions: txRes.rows,
       myTickets: myTicketsRes.rows,
+      unreadRepliesCount,
       referralCount: parseInt(refCountRes.rows[0].count),
       adminPendingTx,
       adminTickets,
@@ -701,7 +708,6 @@ app.post('/api/withdraw', requireAuth, async (req, res) => {
 
 // ==================== SUPPORT TICKET APIs ====================
 
-// User Raises a New Support Ticket
 app.post('/api/tickets', requireAuth, async (req, res) => {
   try {
     const { subject, ticketType, message } = req.body;
@@ -717,8 +723,8 @@ app.post('/api/tickets', requireAuth, async (req, res) => {
 
     const ticketCode = 'TKT-' + Math.floor(100000 + Math.random() * 900000);
     await pool.query(
-      `INSERT INTO support_tickets (ticket_code, user_id, subject, ticket_type, message, status)
-       VALUES ($1, $2, $3, $4, $5, 'open')`,
+      `INSERT INTO support_tickets (ticket_code, user_id, subject, ticket_type, message, unread_reply, status)
+       VALUES ($1, $2, $3, $4, $5, FALSE, 'open')`,
       [ticketCode, req.session.userId, subject.trim(), ticketType.trim(), message.trim()]
     );
 
@@ -729,19 +735,36 @@ app.post('/api/tickets', requireAuth, async (req, res) => {
   }
 });
 
-// Admin Updates Ticket Status & Response
+// Mark unread admin replies as read when user views tickets
+app.post('/api/tickets/mark-read', requireAuth, async (req, res) => {
+  try {
+    await pool.query(
+      `UPDATE support_tickets SET unread_reply = FALSE WHERE user_id = $1 AND unread_reply = TRUE`,
+      [req.session.userId]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to mark replies read.' });
+  }
+});
+
+// Admin Updates Ticket Status & Response (Flags unread_reply = TRUE for User)
 app.post('/api/admin/tickets/:id', requireAdmin, async (req, res) => {
   try {
     const ticketId = req.params.id;
     const { status, adminReply } = req.body;
     const validStatuses = ['open', 'inprogress', 'closed'];
     const nextStatus = validStatuses.includes(status) ? status : 'open';
+    const trimmedReply = (adminReply || '').trim();
 
     const updated = await pool.query(
       `UPDATE support_tickets
-       SET status = $1, admin_reply = $2, updated_at = NOW()
+       SET status = $1,
+           admin_reply = $2,
+           unread_reply = CASE WHEN $2 <> '' THEN TRUE ELSE unread_reply END,
+           updated_at = NOW()
        WHERE id = $3 RETURNING id, ticket_code, status`,
-      [nextStatus, (adminReply || '').trim(), ticketId]
+      [nextStatus, trimmedReply, ticketId]
     );
 
     if (updated.rows.length === 0) {
@@ -755,7 +778,6 @@ app.post('/api/admin/tickets/:id', requireAdmin, async (req, res) => {
   }
 });
 
-// Admin Approves or Rejects Pending Withdrawals/Deposits
 app.post('/api/admin/tx/:id', requireAdmin, async (req, res) => {
   const { action } = req.body;
   const txId = req.params.id;
