@@ -11,7 +11,6 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Crucial for Render.com reverse proxy HTTPS cookies
 app.set('trust proxy', 1);
 
 const pool = new Pool({
@@ -21,7 +20,18 @@ const pool = new Pool({
   idleTimeoutMillis: 30000
 });
 
-// Self-heal missing Google OAuth columns on startup
+// Official USDT Smart Contracts
+const TRC20_USDT_CONTRACT = 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t';
+const BEP20_USDT_CONTRACT = '0x55d398326f99059ff775485246999027b3197955';
+const ERC20_TRANSFER_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
+
+// Receiving Wallets (Replace via Render Environment Variables later)
+const DEPOSIT_WALLETS = {
+  'USDT-TRC20': process.env.WALLET_TRC20 || 'TX9kGoldenHashVaultTRC20DepositAddr889',
+  'USDT-BEP20': process.env.WALLET_BEP20 || '0x71CGoldenHashVaultBEP20DepositAddr992'
+};
+
+// Self-heal schema constraints on startup
 (async () => {
   try {
     await pool.query(`
@@ -30,15 +40,11 @@ const pool = new Pool({
       ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT;
     `);
   } catch (e) {
-    console.warn('Schema check skipped or pending initial SQL:', e.message);
+    console.warn('Startup schema check:', e.message);
   }
 })();
 
-app.use(
-  helmet({
-    contentSecurityPolicy: false // Prevents Tailwind CDN & inline event handler blocks
-  })
-);
+app.use(helmet({ contentSecurityPolicy: false }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
@@ -65,13 +71,129 @@ app.use(
   })
 );
 
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 200
-});
+const apiLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 200 });
 app.use('/api/', apiLimiter);
 
-// --- HELPER: Generate Unique 6-Digit UID & Referral Code ---
+// ==================== LIVE BLOCKCHAIN VERIFIERS ====================
+
+// 1. Verify TRON TRC20 USDT Deposit via TronGrid Public API
+async function verifyTronUsdtDeposit(txHash, expectedRecipient) {
+  const cleanHash = txHash.trim().replace(/^0x/i, '');
+  const url = `https://api.trongrid.io/v1/transactions/${cleanHash}/events`;
+  const headers = { Accept: 'application/json' };
+  if (process.env.TRONGRID_API_KEY) {
+    headers['TRON-PRO-API-KEY'] = process.env.TRONGRID_API_KEY;
+  }
+
+  const response = await fetch(url, { headers });
+  if (!response.ok) {
+    throw new Error('Unable to reach TRON blockchain explorer. Try again in a moment.');
+  }
+
+  const json = await response.json();
+  if (!json.success || !Array.isArray(json.data) || json.data.length === 0) {
+    throw new Error('Transaction not found or still confirming on TRON network. Wait 1 minute and retry.');
+  }
+
+  // Search Transfer events for official USDT TRC20 contract
+  for (const ev of json.data) {
+    if (
+      ev.contract_address === TRC20_USDT_CONTRACT &&
+      ev.event_name === 'Transfer' &&
+      ev.result
+    ) {
+      const toAddr = ev.result.to || ev.result['1'];
+      const rawVal = ev.result.value || ev.result['2'];
+
+      // TronGrid returns hex (41...) or base58 depending on endpoint; check TronScan fallback if hex
+      let matchedRecipient = toAddr === expectedRecipient;
+      if (!matchedRecipient && toAddr && toAddr.startsWith('0x')) {
+        // Query TronScan public API for Base58 decoded recipient
+        const tsRes = await fetch(`https://apilist.tronscanapi.com/api/transaction-info?hash=${cleanHash}`);
+        if (tsRes.ok) {
+          const tsData = await tsRes.json();
+          if (tsData.contractRet !== 'SUCCESS') {
+            throw new Error('TRON transaction failed on-chain.');
+          }
+          const trc20Transfers = tsData.trc20TransferInfo || [];
+          const match = trc20Transfers.find(
+            (t) =>
+              t.contract_address === TRC20_USDT_CONTRACT &&
+              t.to_address === expectedRecipient
+          );
+          if (match) {
+            const amountUsdt = Number(match.amount_str) / 1e6;
+            return { verified: true, amountUsdt };
+          }
+        }
+      }
+
+      if (matchedRecipient && rawVal) {
+        const amountUsdt = Number(rawVal) / 1e6; // TRC20 USDT uses 6 decimals
+        return { verified: true, amountUsdt };
+      }
+    }
+  }
+
+  throw new Error(`No USDT (TRC20) transfer to ${expectedRecipient} found in this TXID.`);
+}
+
+// 2. Verify BNB Smart Chain (BEP20) USDT Deposit via Public BSC RPC
+async function verifyBscUsdtDeposit(txHash, expectedRecipient) {
+  const cleanHash = txHash.trim().startsWith('0x') ? txHash.trim() : '0x' + txHash.trim();
+
+  const rpcRes = await fetch('https://bsc-dataseed.binance.org/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'eth_getTransactionReceipt',
+      params: [cleanHash]
+    })
+  });
+
+  if (!rpcRes.ok) {
+    throw new Error('Unable to reach BNB Smart Chain RPC node.');
+  }
+
+  const rpcJson = await rpcRes.json();
+  const receipt = rpcJson.result;
+
+  if (!receipt) {
+    throw new Error('Transaction not found or still pending on BNB Chain. Wait 15 seconds and retry.');
+  }
+
+  if (receipt.status !== '0x1') {
+    throw new Error('This BNB Chain transaction failed (reverted) on-chain.');
+  }
+
+  const targetAddrLower = expectedRecipient.toLowerCase().replace(/^0x/, '');
+
+  for (const log of receipt.logs || []) {
+    if (
+      log.address &&
+      log.address.toLowerCase() === BEP20_USDT_CONTRACT &&
+      Array.isArray(log.topics) &&
+      log.topics.length >= 3 &&
+      log.topics[0].toLowerCase() === ERC20_TRANSFER_TOPIC
+    ) {
+      // topics[2] is 32-byte zero-padded recipient address
+      const logRecipient = log.topics[2].toLowerCase().slice(-40);
+      if (logRecipient === targetAddrLower) {
+        const rawWei = BigInt(log.data);
+        // BEP20 USDT uses 18 decimals
+        const amountUsdt = Number(rawWei) / 1e18;
+        return { verified: true, amountUsdt };
+      }
+    }
+  }
+
+  throw new Error(`No USDT (BEP20) transfer to ${expectedRecipient} found in this TXID.`);
+}
+
+// ==================== HELPERS ====================
+
 async function generateUniqueIdentifiers() {
   let publicUid;
   let exists = true;
@@ -84,7 +206,6 @@ async function generateUniqueIdentifiers() {
   return { publicUid, referralCode };
 }
 
-// --- HELPER: Real-Time Mining Accrual Engine ---
 const BASE_FREE_RATE_PER_GHS_SEC = 0.00000003;
 
 async function calculateMiningState(userId) {
@@ -158,7 +279,6 @@ app.get('/login', (req, res) => {
   });
 });
 
-// Email / Password Registration
 app.post('/auth/register', async (req, res) => {
   try {
     const { username, email, password, ref } = req.body;
@@ -197,17 +317,12 @@ app.post('/auth/register', async (req, res) => {
 
     req.session.userId = insertRes.rows[0].id;
     req.session.role = insertRes.rows[0].role;
-    req.session.save((err) => {
-      if (err) return res.redirect('/login?mode=register&error=' + encodeURIComponent('Session save failed. Try again.'));
-      res.redirect('/dashboard');
-    });
+    req.session.save(() => res.redirect('/dashboard'));
   } catch (err) {
-    console.error('Register error:', err);
     res.redirect('/login?mode=register&error=' + encodeURIComponent('Registration error: ' + err.message));
   }
 });
 
-// Email / Password Login
 app.post('/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -217,32 +332,25 @@ app.post('/auth/login', async (req, res) => {
     }
 
     const user = userRes.rows[0];
-    if (user.is_banned) {
-      return res.redirect('/login?error=' + encodeURIComponent('This account has been suspended.'));
-    }
+    if (user.is_banned) return res.redirect('/login?error=' + encodeURIComponent('Account suspended.'));
     if (!user.password_hash) {
-      return res.redirect('/login?error=' + encodeURIComponent('This account uses Sign in with Google. Click the Google button above.'));
+      return res.redirect('/login?error=' + encodeURIComponent('This account uses Sign in with Google.'));
     }
 
     const valid = await bcrypt.compare(password, user.password_hash);
-    if (!valid) {
-      return res.redirect('/login?error=' + encodeURIComponent('Incorrect password.'));
-    }
+    if (!valid) return res.redirect('/login?error=' + encodeURIComponent('Incorrect password.'));
 
     req.session.userId = user.id;
     req.session.role = user.role;
     req.session.save(() => res.redirect('/dashboard'));
   } catch (err) {
-    console.error('Login error:', err);
     res.redirect('/login?error=' + encodeURIComponent('Server error during login.'));
   }
 });
 
-// ==================== GOOGLE OAUTH 2.0 ====================
-
 app.get('/auth/google', (req, res) => {
   if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
-    return res.redirect('/login?error=' + encodeURIComponent('Google Sign-In is not configured yet. Add GOOGLE_CLIENT_ID & GOOGLE_CLIENT_SECRET in Render Env.'));
+    return res.redirect('/login?error=' + encodeURIComponent('Google Sign-In is not configured yet.'));
   }
 
   const redirectUri = `${req.protocol}://${req.get('host')}/auth/google/callback`;
@@ -263,12 +371,10 @@ app.get('/auth/google', (req, res) => {
 
 app.get('/auth/google/callback', async (req, res) => {
   const { code, state } = req.query;
-  if (!code) return res.redirect('/login?error=' + encodeURIComponent('Google sign-in was cancelled.'));
+  if (!code) return res.redirect('/login?error=' + encodeURIComponent('Google sign-in cancelled.'));
 
   try {
     const redirectUri = `${req.protocol}://${req.get('host')}/auth/google/callback`;
-
-    // 1. Exchange authorization code for access token
     const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -281,32 +387,25 @@ app.get('/auth/google/callback', async (req, res) => {
       })
     });
     const tokenData = await tokenRes.json();
-    if (!tokenData.access_token) throw new Error('Failed to obtain Google access token');
+    if (!tokenData.access_token) throw new Error('Failed to obtain Google token');
 
-    // 2. Fetch Google user profile
     const profileRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
       headers: { Authorization: `Bearer ${tokenData.access_token}` }
     });
     const profile = await profileRes.json();
-    if (!profile.email) throw new Error('Google account has no verified email');
-
     const cleanEmail = profile.email.toLowerCase().trim();
 
-    // 3. Find existing user by google_id or email
     let userRes = await pool.query('SELECT * FROM users WHERE google_id = $1 OR email = $2', [profile.id, cleanEmail]);
     let user;
 
     if (userRes.rows.length > 0) {
       user = userRes.rows[0];
       if (user.is_banned) return res.redirect('/login?error=' + encodeURIComponent('Account suspended.'));
-
-      // Link Google ID & avatar if registered via email earlier
       await pool.query(
         'UPDATE users SET google_id = COALESCE(google_id, $1), avatar_url = COALESCE($2, avatar_url) WHERE id = $3',
         [profile.id, profile.picture || null, user.id]
       );
     } else {
-      // 4. Create brand new user with 50 GH/s welcome rig
       const { publicUid, referralCode } = await generateUniqueIdentifiers();
       const baseUsername = (profile.name || cleanEmail.split('@')[0]).replace(/[^a-zA-Z0-9_]/g, '').slice(0, 18) || 'Miner';
       const uniqueUsername = `${baseUsername}_${Math.floor(100 + Math.random() * 899)}`;
@@ -332,7 +431,6 @@ app.get('/auth/google/callback', async (req, res) => {
     req.session.role = user.role;
     req.session.save(() => res.redirect('/dashboard'));
   } catch (err) {
-    console.error('Google OAuth callback error:', err);
     res.redirect('/login?error=' + encodeURIComponent('Google sign-in failed: ' + err.message));
   }
 });
@@ -348,7 +446,13 @@ app.get('/dashboard', requireAuth, async (req, res) => {
     const state = await calculateMiningState(req.session.userId);
     if (!state) return res.redirect('/logout');
 
-    const plansRes = await pool.query('SELECT * FROM mining_plans WHERE is_active = TRUE ORDER BY price_usdt ASC');
+    // SELECT DISTINCT ON (name) ensures zero visual duplicates even if DB wasn't truncated yet
+    const plansRes = await pool.query(
+      `SELECT * FROM (
+         SELECT DISTINCT ON (name) * FROM mining_plans WHERE is_active = TRUE ORDER BY name, id ASC
+       ) sub ORDER BY price_usdt ASC`
+    );
+
     const txRes = await pool.query(
       'SELECT * FROM transactions WHERE user_id = $1 ORDER BY created_at DESC LIMIT 15',
       [req.session.userId]
@@ -375,11 +479,7 @@ app.get('/dashboard', requireAuth, async (req, res) => {
       transactions: txRes.rows,
       referralCount: parseInt(refCountRes.rows[0].count),
       adminPendingTx,
-      depositWallets: {
-        'USDT-TRC20': process.env.WALLET_TRC20 || 'TX9kGoldenHashVaultTRC20DepositAddr889',
-        'USDT-BEP20': process.env.WALLET_BEP20 || '0x71CGoldenHashVaultBEP20DepositAddr992',
-        'BTC': process.env.WALLET_BTC || 'bc1qgoldenhashvaultbtcdepositaddr774'
-      },
+      depositWallets: DEPOSIT_WALLETS,
       baseUrl: `${req.protocol}://${req.get('host')}`
     });
   } catch (err) {
@@ -485,21 +585,72 @@ app.post('/api/plans/buy', requireAuth, async (req, res) => {
   }
 });
 
-app.post('/api/deposit', requireAuth, async (req, res) => {
+// LIVE ON-CHAIN USDT DEPOSIT VERIFICATION (TRC20 & BEP20)
+app.post('/api/deposit/verify', requireAuth, async (req, res) => {
+  const { network, txHash } = req.body;
+  if (!txHash || txHash.trim().length < 20) {
+    return res.status(400).json({ error: 'Please paste a valid blockchain Transaction Hash (TXID).' });
+  }
+
+  const normalizedHash = txHash.trim().toLowerCase();
+
   try {
-    const { network, amount, txHash } = req.body;
-    const parsedAmount = parseFloat(amount);
-    if (!parsedAmount || parsedAmount < 5) return res.status(400).json({ error: 'Minimum deposit is $5.00 USDT' });
-    if (!txHash || txHash.trim().length < 10) return res.status(400).json({ error: 'Valid Transaction Hash (TXID) is required' });
+    // 1. Check if TXID was already claimed by any user
+    const existing = await pool.query('SELECT id FROM transactions WHERE LOWER(tx_hash) = $1', [normalizedHash]);
+    if (existing.rows.length > 0) {
+      return res.status(400).json({ error: 'This Transaction Hash (TXID) has already been verified and credited.' });
+    }
 
-    await pool.query(
-      `INSERT INTO transactions (user_id, type, network, amount_usdt, tx_hash, status) VALUES ($1, 'deposit', $2, $3, $4, 'pending')`,
-      [req.session.userId, network, parsedAmount, txHash.trim()]
-    );
+    // 2. Verify live on-chain depending on selected chain
+    let verification;
+    if (network === 'USDT-TRC20') {
+      verification = await verifyTronUsdtDeposit(txHash.trim(), DEPOSIT_WALLETS['USDT-TRC20']);
+    } else if (network === 'USDT-BEP20') {
+      verification = await verifyBscUsdtDeposit(txHash.trim(), DEPOSIT_WALLETS['USDT-BEP20']);
+    } else {
+      return res.status(400).json({ error: 'Unsupported network selected.' });
+    }
 
-    res.json({ success: true, message: 'Deposit submitted! Credited after network confirmation.' });
+    if (!verification.verified || verification.amountUsdt < 1) {
+      return res.status(400).json({ error: 'Verified transfer amount must be at least $1.00 USDT.' });
+    }
+
+    // 3. Atomically credit exact on-chain USDT amount to the user
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      const updatedUser = await client.query(
+        `UPDATE users SET balance_usdt = balance_usdt + $1 WHERE id = $2 RETURNING public_uid, balance_usdt`,
+        [verification.amountUsdt, req.session.userId]
+      );
+
+      await client.query(
+        `INSERT INTO transactions (user_id, type, network, amount_usdt, tx_hash, status)
+         VALUES ($1, 'deposit', $2, $3, $4, 'approved')`,
+        [req.session.userId, network, verification.amountUsdt, txHash.trim()]
+      );
+
+      await client.query('COMMIT');
+
+      res.json({
+        success: true,
+        creditedAmount: verification.amountUsdt,
+        publicUid: updatedUser.rows[0].public_uid,
+        newBalance: parseFloat(updatedUser.rows[0].balance_usdt),
+        network
+      });
+    } catch (dbErr) {
+      await client.query('ROLLBACK');
+      if (dbErr.code === '23505') {
+        return res.status(400).json({ error: 'This TXID has already been credited.' });
+      }
+      throw dbErr;
+    } finally {
+      client.release();
+    }
   } catch (err) {
-    res.status(500).json({ error: 'Failed to submit deposit' });
+    res.status(400).json({ error: err.message });
   }
 });
 
