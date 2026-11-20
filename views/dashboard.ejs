@@ -23,6 +23,7 @@
     html, body {
       font-family: 'Plus Jakarta Sans', sans-serif;
       overflow-x: hidden;
+      scroll-behavior: smooth;
     }
     .mono { font-family: 'JetBrains Mono', monospace; }
 
@@ -71,6 +72,11 @@
       border: 2px solid #f59e0b;
       animation: pulse-ring 2s infinite;
     }
+
+    /* Left Slide-Over Navigation Drawer */
+    .left-drawer {
+      transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    }
   </style>
 </head>
 <body class="bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-slate-100 min-h-screen transition-colors duration-300">
@@ -95,8 +101,12 @@
   <!-- Main Sticky Navigation Bar -->
   <header class="sticky top-0 z-40 backdrop-blur-xl bg-white/90 dark:bg-slate-900/90 border-b border-slate-200 dark:border-amber-500/20">
     <div class="max-w-7xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between gap-2">
-      <!-- Brand Logo -->
-      <div class="flex items-center gap-2.5 min-w-0">
+      <!-- Left: Hamburger Menu Button + Brand Logo -->
+      <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+        <button type="button" onclick="openLeftDrawer()" class="w-10 h-10 rounded-xl bg-slate-200/80 dark:bg-slate-800 hover:bg-amber-500/20 border border-slate-300/60 dark:border-slate-700 flex items-center justify-center text-slate-800 dark:text-amber-400 transition shrink-0" aria-label="Open Navigation Menu">
+          <i class="fa-solid fa-bars text-base"></i>
+        </button>
+
         <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-amber-400 via-yellow-500 to-orange-600 flex items-center justify-center text-slate-950 text-lg sm:text-xl font-extrabold shadow-lg shadow-amber-500/25 shrink-0">
           <i class="fa-brands fa-bitcoin"></i>
         </div>
@@ -108,79 +118,111 @@
         </div>
       </div>
 
-      <!-- Desktop Navigation Actions (Hidden on Mobile) -->
-      <div class="hidden md:flex items-center gap-3 shrink-0">
-        <button onclick="openSupportModal()" class="px-3.5 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border border-amber-500/30 text-xs font-bold transition flex items-center gap-1.5">
+      <!-- Right: Support (With Unread Reply Badge) + Theme Toggle + Logout -->
+      <div class="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+        <button type="button" onclick="openSupportSectionAndMarkRead()" class="relative px-3 sm:px-3.5 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border border-amber-500/30 text-xs font-bold transition flex items-center gap-1.5">
           <i class="fa-solid fa-headset"></i>
           <span>Support</span>
+          <% if (unreadRepliesCount > 0) { %>
+            <span id="header-unread-badge" class="ml-0.5 px-1.5 py-0.5 text-[10px] font-extrabold rounded-full bg-rose-500 text-white animate-pulse">
+              <%= unreadRepliesCount %>
+            </span>
+          <% } %>
         </button>
 
-        <div class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-slate-200/80 dark:bg-slate-800/90 border border-slate-300/60 dark:border-slate-700/60">
-          <% if (user.avatar_url) { %>
-            <img src="<%= user.avatar_url %>" alt="Avatar" class="w-6 h-6 rounded-full object-cover border border-amber-400 shrink-0" />
-          <% } else { %>
-            <div class="w-6 h-6 rounded-full bg-amber-500 text-slate-950 font-extrabold text-xs flex items-center justify-center shrink-0">
-              <%= user.username.charAt(0).toUpperCase() %>
-            </div>
-          <% } %>
-          <div class="text-xs leading-tight max-w-[140px] truncate">
-            <div class="font-bold truncate"><%= user.username %></div>
-            <div class="text-[10px] text-slate-500 dark:text-slate-400 mono">UID: <%= user.public_uid %></div>
-          </div>
-        </div>
-
-        <button id="theme-toggle" class="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-amber-500/20 flex items-center justify-center transition shrink-0" title="Toggle Dark/Light Theme">
+        <button id="theme-toggle" class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-amber-500/20 flex items-center justify-center transition shrink-0" title="Toggle Dark/Light Theme">
           <i id="theme-icon" class="fa-solid fa-sun text-amber-400 text-sm"></i>
         </button>
 
-        <a href="/logout" class="px-3.5 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 text-xs font-bold transition flex items-center gap-1.5 shrink-0">
+        <a href="/logout" class="px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 text-xs font-bold transition flex items-center gap-1.5 shrink-0">
           <i class="fa-solid fa-right-from-bracket"></i>
-          <span>Logout</span>
+          <span class="hidden sm:inline">Logout</span>
         </a>
       </div>
-
-      <!-- Mobile Hamburger Button (Visible Only on Mobile < md) -->
-      <button type="button" onclick="toggleMobileMenu()" class="md:hidden w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-amber-500/20 flex items-center justify-center text-slate-700 dark:text-amber-400 transition shrink-0" aria-label="Open Menu">
-        <i id="hamburger-icon" class="fa-solid fa-bars text-lg"></i>
-      </button>
-    </div>
-
-    <!-- Mobile Hamburger Drawer (Hides User Icon, Name, UID, Support & Actions on Mobile) -->
-    <div id="mobile-menu-drawer" class="hidden md:hidden bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 py-4 space-y-3 shadow-xl">
-      <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
-        <div class="flex items-center gap-3 min-w-0">
-          <% if (user.avatar_url) { %>
-            <img src="<%= user.avatar_url %>" alt="Avatar" class="w-9 h-9 rounded-full object-cover border border-amber-400 shrink-0" />
-          <% } else { %>
-            <div class="w-9 h-9 rounded-full bg-amber-500 text-slate-950 font-extrabold text-sm flex items-center justify-center shrink-0">
-              <%= user.username.charAt(0).toUpperCase() %>
-            </div>
-          <% } %>
-          <div class="min-w-0">
-            <div class="text-sm font-bold truncate"><%= user.username %></div>
-            <div class="text-[11px] text-amber-500 mono font-semibold">User ID: #<%= user.public_uid %></div>
-          </div>
-        </div>
-        <button type="button" id="theme-toggle-mobile" class="w-9 h-9 rounded-xl bg-slate-200 dark:bg-slate-800 flex items-center justify-center shrink-0">
-          <i id="theme-icon-mobile" class="fa-solid fa-sun text-amber-400 text-sm"></i>
-        </button>
-      </div>
-
-      <div class="grid grid-cols-2 gap-2.5">
-        <button type="button" onclick="closeMobileMenu(); openDepositModal();" class="py-2.5 px-3 rounded-xl bg-amber-500 text-slate-950 font-extrabold text-xs flex items-center justify-center gap-1.5">
-          <i class="fa-solid fa-arrow-down"></i>Deposit
-        </button>
-        <button type="button" onclick="closeMobileMenu(); openSupportModal();" class="py-2.5 px-3 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30 font-extrabold text-xs flex items-center justify-center gap-1.5">
-          <i class="fa-solid fa-headset"></i>Support
-        </button>
-      </div>
-
-      <a href="/logout" class="w-full py-2.5 px-4 rounded-xl bg-rose-500/10 text-rose-500 font-bold text-xs flex items-center justify-center gap-2">
-        <i class="fa-solid fa-right-from-bracket"></i>
-        <span>Logout Account</span>
-      </a>
     </div>
   </header>
+
+  <!-- LEFT SIDE HAMBURGER NAVIGATION DRAWER -->
+  <div id="left-drawer-backdrop" onclick="closeLeftDrawer()" class="hidden fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-xs"></div>
+  <aside id="left-drawer" class="left-drawer fixed top-0 left-0 bottom-0 z-50 w-72 sm:w-80 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-amber-500/25 shadow-2xl -translate-x-full flex flex-col justify-between overflow-y-auto">
+    <div>
+      <!-- Drawer Top Close Row -->
+      <div class="px-5 pt-5 pb-3 flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800">
+        <span class="text-xs font-extrabold uppercase tracking-wider text-amber-500">Miner Navigation</span>
+        <button type="button" onclick="closeLeftDrawer()" class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-rose-500/20 hover:text-rose-400 flex items-center justify-center transition">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Profile Logo on Top + Name Below -->
+      <div class="p-5 border-b border-slate-200/80 dark:border-slate-800 flex flex-col items-center text-center bg-gradient-to-b from-amber-500/10 to-transparent">
+        <% if (user.avatar_url) { %>
+          <img src="<%= user.avatar_url %>" alt="Profile Logo" class="w-16 h-16 rounded-2xl object-cover border-2 border-amber-400 shadow-lg shadow-amber-500/20" />
+        <% } else { %>
+          <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 via-yellow-500 to-orange-600 text-slate-950 font-extrabold text-2xl flex items-center justify-center shadow-lg shadow-amber-500/25">
+            <%= user.username.charAt(0).toUpperCase() %>
+          </div>
+        <% } %>
+        <div class="mt-3 font-extrabold text-base text-slate-900 dark:text-white truncate max-w-full"><%= user.username %></div>
+        <div class="mt-0.5 text-[11px] mono text-amber-500 font-bold">UID: #<%= user.public_uid %></div>
+        <div class="mt-2 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[11px] font-bold mono">
+          Balance: $<%= parseFloat(user.balance_usdt).toFixed(2) %>
+        </div>
+      </div>
+
+      <!-- Important Navigation Menu -->
+      <nav class="p-4 space-y-1.5 text-xs font-bold">
+        <a href="#mining-console" onclick="closeLeftDrawer()" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-amber-500/15 hover:text-amber-400 transition">
+          <i class="fa-solid fa-gauge-high w-4 text-center text-amber-500"></i>
+          <span>Mining Console</span>
+        </a>
+        <a href="#btc-rigs" onclick="closeLeftDrawer()" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-amber-500/15 hover:text-amber-400 transition">
+          <i class="fa-brands fa-bitcoin w-4 text-center text-amber-500"></i>
+          <span>3D Bitcoin ASIC Rigs</span>
+        </a>
+        <button type="button" onclick="closeLeftDrawer(); openDepositModal();" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-amber-500/15 hover:text-amber-400 transition text-left">
+          <i class="fa-solid fa-circle-arrow-down w-4 text-center text-emerald-500"></i>
+          <span>Deposit USDT (BEP20 Default)</span>
+        </button>
+        <button type="button" onclick="closeLeftDrawer(); openModal('withdraw-modal');" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-amber-500/15 hover:text-amber-400 transition text-left">
+          <i class="fa-solid fa-circle-arrow-up w-4 text-center text-amber-400"></i>
+          <span>Withdraw Earnings</span>
+        </button>
+        <a href="#profit-calc" onclick="closeLeftDrawer()" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-amber-500/15 hover:text-amber-400 transition">
+          <i class="fa-solid fa-calculator w-4 text-center text-emerald-400"></i>
+          <span>1% / 30% Profit Calculator</span>
+        </a>
+        <a href="#support-section" onclick="closeLeftDrawer(); markRepliesRead();" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl hover:bg-amber-500/15 hover:text-amber-400 transition">
+          <span class="flex items-center gap-3">
+            <i class="fa-solid fa-headset w-4 text-center text-amber-500"></i>
+            <span>Support Tickets</span>
+          </span>
+          <% if (unreadRepliesCount > 0) { %>
+            <span class="drawer-unread-badge px-2 py-0.5 text-[10px] font-extrabold rounded-full bg-rose-500 text-white">
+              <%= unreadRepliesCount %> New
+            </span>
+          <% } %>
+        </a>
+        <a href="#ledger-history" onclick="closeLeftDrawer()" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-amber-500/15 hover:text-amber-400 transition">
+          <i class="fa-solid fa-clock-rotate-left w-4 text-center text-slate-400"></i>
+          <span>Transaction Ledger</span>
+        </a>
+        <% if (user.role === 'admin') { %>
+          <a href="#admin-panel" onclick="closeLeftDrawer()" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30 transition">
+            <i class="fa-solid fa-shield-halved w-4 text-center"></i>
+            <span>Admin Control Desk</span>
+          </a>
+        <% } %>
+      </nav>
+    </div>
+
+    <div class="p-4 border-t border-slate-200/80 dark:border-slate-800">
+      <a href="/logout" class="w-full py-2.5 px-4 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 font-bold text-xs flex items-center justify-center gap-2 transition">
+        <i class="fa-solid fa-right-from-bracket"></i>
+        <span>Logout</span>
+      </a>
+    </div>
+  </aside>
 
   <main class="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-5 sm:space-y-6">
 
@@ -256,7 +298,7 @@
     </section>
 
     <!-- Live Bitcoin Mining Console -->
-    <section class="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-slate-900 via-slate-900 to-amber-950/50 border border-amber-500/30 p-5 sm:p-8 text-white shadow-2xl">
+    <section id="mining-console" class="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-slate-900 via-slate-900 to-amber-950/50 border border-amber-500/30 p-5 sm:p-8 text-white shadow-2xl">
       <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 sm:gap-6">
         <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-5 w-full">
           <div class="relative mining-pulse w-14 h-14 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-amber-400 via-yellow-500 to-orange-600 flex items-center justify-center text-slate-950 text-2xl sm:text-3xl font-extrabold shadow-lg shadow-amber-500/30 shrink-0">
@@ -285,7 +327,7 @@
     </section>
 
     <!-- Bitcoin Mining Rig Cards (Free Welcome + $50 to $10,000, 3D ASIC Rig on Every Card) -->
-    <section>
+    <section id="btc-rigs">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
         <div>
           <h2 class="text-lg sm:text-xl font-extrabold flex items-center gap-2">
@@ -375,7 +417,7 @@
     </section>
 
     <!-- Affiliate Referral Link & 1% Daily / 30% Monthly BTC Calculator -->
-    <section class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+    <section id="profit-calc" class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
       <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-6">
         <h3 class="font-bold text-sm sm:text-base flex items-center gap-2">
           <i class="fa-solid fa-share-nodes text-amber-500"></i> Partner Referral Program (10% Instant USDT)
@@ -420,7 +462,7 @@
     </section>
 
     <!-- User Support Tickets Section (Shows User's Tickets & Admin Replies) -->
-    <section class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-6">
+    <section id="support-section" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-6">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div>
           <h3 class="font-bold text-sm sm:text-base flex items-center gap-2">
@@ -429,13 +471,13 @@
           <p class="text-xs text-slate-500 dark:text-slate-400">Raise a ticket for deposit, withdrawal, rig, or account help and track live admin replies.</p>
         </div>
         <button type="button" onclick="openSupportModal()" class="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs transition flex items-center justify-center gap-1.5 shrink-0">
-          <i class="fa-solid fa-plus"></i><span>Raise New Ticket</span>
+          <i class="fa-solid fa-plus"></i><span>Raise Ticket</span>
         </button>
       </div>
 
       <% if (myTickets.length === 0) { %>
         <div class="py-6 text-center text-xs text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
-          No support tickets raised yet. Click <strong>Raise New Ticket</strong> if you need assistance.
+          No support tickets raised yet. Click <strong>Raise Ticket</strong> if you need assistance.
         </div>
       <% } else { %>
         <div class="space-y-3">
@@ -452,6 +494,9 @@
                   <span class="mono text-xs font-bold text-amber-500"><%= t.ticket_code %></span>
                   <span class="text-xs font-bold"><%= t.subject %></span>
                   <span class="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300"><%= t.ticket_type %></span>
+                  <% if (t.unread_reply) { %>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-500 text-white">NEW REPLY</span>
+                  <% } %>
                 </div>
                 <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase border <%= badgeClass %>">
                   <%= t.status === 'inprogress' ? 'In Progress' : t.status %>
@@ -474,8 +519,7 @@
 
     <!-- Admin Control Panel (Visible ONLY to Admin Role) -->
     <% if (user.role === 'admin') { %>
-    <section class="bg-white dark:bg-slate-900 border-2 border-amber-500/40 rounded-2xl p-4 sm:p-6 space-y-6">
-      <!-- Pending Withdrawals / Deposits Queue -->
+    <section id="admin-panel" class="bg-white dark:bg-slate-900 border-2 border-amber-500/40 rounded-2xl p-4 sm:p-6 space-y-6">
       <div>
         <h3 class="font-extrabold text-sm sm:text-base text-amber-500 flex items-center gap-2 mb-3">
           <i class="fa-solid fa-shield-halved"></i> ADMIN TRANSACTION QUEUE (<%= adminPendingTx.length %> Pending)
@@ -566,7 +610,7 @@
     <% } %>
 
     <!-- Transaction History Ledger -->
-    <section class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-6">
+    <section id="ledger-history" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-6">
       <h3 class="font-bold text-sm sm:text-base mb-4 flex items-center gap-2">
         <i class="fa-solid fa-clock-rotate-left text-amber-500"></i> Recent Mining & Ledger Activity
       </h3>
@@ -744,38 +788,34 @@
       })
       .catch(() => {});
 
-    // 3. Mobile Hamburger Menu Toggle
-    function toggleMobileMenu() {
-      const drawer = document.getElementById('mobile-menu-drawer');
-      const icon = document.getElementById('hamburger-icon');
-      const isHidden = drawer.classList.toggle('hidden');
-      icon.className = isHidden ? 'fa-solid fa-bars text-lg' : 'fa-solid fa-xmark text-lg';
+    // 3. Left-Side Slide-Over Hamburger Drawer Controls
+    function openLeftDrawer() {
+      document.getElementById('left-drawer-backdrop').classList.remove('hidden');
+      document.getElementById('left-drawer').classList.remove('-translate-x-full');
     }
-    function closeMobileMenu() {
-      document.getElementById('mobile-menu-drawer').classList.add('hidden');
-      document.getElementById('hamburger-icon').className = 'fa-solid fa-bars text-lg';
+    function closeLeftDrawer() {
+      document.getElementById('left-drawer').classList.add('-translate-x-full');
+      document.getElementById('left-drawer-backdrop').classList.add('hidden');
     }
 
-    // 4. Dark / Light Theme Toggle (Desktop & Mobile)
+    // 4. Dark / Light Theme Toggle
     const htmlEl = document.documentElement;
-    function syncThemeIcons() {
+    function syncThemeIcon() {
       const isDark = htmlEl.classList.contains('dark');
-      const cls = isDark ? 'fa-solid fa-sun text-amber-400 text-sm' : 'fa-solid fa-moon text-slate-700 text-sm';
-      document.getElementById('theme-icon').className = cls;
-      document.getElementById('theme-icon-mobile').className = cls;
+      document.getElementById('theme-icon').className = isDark
+        ? 'fa-solid fa-sun text-amber-400 text-sm'
+        : 'fa-solid fa-moon text-slate-700 text-sm';
     }
     if (localStorage.getItem('gh_theme') === 'light') {
       htmlEl.classList.remove('dark');
     }
-    syncThemeIcons();
+    syncThemeIcon();
 
-    function handleThemeToggle() {
+    document.getElementById('theme-toggle').addEventListener('click', () => {
       htmlEl.classList.toggle('dark');
       localStorage.setItem('gh_theme', htmlEl.classList.contains('dark') ? 'dark' : 'light');
-      syncThemeIcons();
-    }
-    document.getElementById('theme-toggle').addEventListener('click', handleThemeToggle);
-    document.getElementById('theme-toggle-mobile').addEventListener('click', handleThemeToggle);
+      syncThemeIcon();
+    });
 
     function showToast(msg, isError = false) {
       const t = document.getElementById('toast');
@@ -834,6 +874,18 @@
     }
     function openSupportModal() {
       openModal('support-modal');
+    }
+    async function markRepliesRead() {
+      try {
+        await fetch('/api/tickets/mark-read', { method: 'POST' });
+        const hb = document.getElementById('header-unread-badge');
+        if (hb) hb.remove();
+        document.querySelectorAll('.drawer-unread-badge').forEach(el => el.remove());
+      } catch (_) {}
+    }
+    function openSupportSectionAndMarkRead() {
+      markRepliesRead();
+      document.getElementById('support-section').scrollIntoView({ behavior: 'smooth' });
     }
     function copyVault() {
       navigator.clipboard.writeText(document.getElementById('vault-address').textContent);
@@ -926,7 +978,6 @@
       setTimeout(() => location.reload(), 1000);
     }
 
-    // User Support Ticket Submission
     async function submitSupportTicket() {
       const btn = document.getElementById('raise-tkt-btn');
       const subject = document.getElementById('tkt-subject').value.trim();
@@ -952,7 +1003,6 @@
       }
     }
 
-    // Admin Ticket Status & Response Update
     async function updateAdminTicket(ticketId) {
       const status = document.getElementById(`ticket-status-${ticketId}`).value;
       const adminReply = document.getElementById(`ticket-reply-${ticketId}`).value;
