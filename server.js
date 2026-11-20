@@ -457,10 +457,29 @@ app.get('/dashboard', requireAuth, async (req, res) => {
     );
 
     const txRes = await pool.query(
-      'SELECT * FROM transactions WHERE user_id = $1 ORDER BY created_at DESC LIMIT 15',
+      'SELECT * FROM transactions WHERE user_id = $1 ORDER BY created_at DESC LIMIT 25',
       [req.session.userId]
     );
-    const refCountRes = await pool.query('SELECT COUNT(*) FROM users WHERE referred_by = $1', [req.session.userId]);
+
+    // Full Team Structure & Referral Status
+    const teamRes = await pool.query(
+      `SELECT 
+         u.id,
+         u.public_uid,
+         u.username,
+         u.total_hashrate_ghs,
+         u.created_at,
+         COALESCE(SUM(t.amount_usdt), 0) AS total_spent_usdt,
+         COALESCE(SUM(t.amount_usdt) * 0.10, 0) AS commission_generated_usdt,
+         COUNT(uc.id) FILTER (WHERE uc.status = 'active') AS active_rigs_count
+       FROM users u
+       LEFT JOIN transactions t ON t.user_id = u.id AND t.type = 'plan_buy' AND t.status = 'completed'
+       LEFT JOIN user_contracts uc ON uc.user_id = u.id AND uc.status = 'active'
+       WHERE u.referred_by = $1
+       GROUP BY u.id
+       ORDER BY u.created_at DESC`,
+      [req.session.userId]
+    );
 
     const myTicketsRes = await pool.query(
       'SELECT * FROM support_tickets WHERE user_id = $1 ORDER BY updated_at DESC LIMIT 20',
@@ -497,9 +516,10 @@ app.get('/dashboard', requireAuth, async (req, res) => {
       perSecondRate: state.perSecondRate,
       plans: plansRes.rows,
       transactions: txRes.rows,
+      referralTeam: teamRes.rows,
+      referralCount: teamRes.rows.length,
       myTickets: myTicketsRes.rows,
       unreadRepliesCount,
-      referralCount: parseInt(refCountRes.rows[0].count),
       adminPendingTx,
       adminTickets,
       depositWallets: DEPOSIT_WALLETS,
@@ -735,7 +755,6 @@ app.post('/api/tickets', requireAuth, async (req, res) => {
   }
 });
 
-// Mark unread admin replies as read when user views tickets
 app.post('/api/tickets/mark-read', requireAuth, async (req, res) => {
   try {
     await pool.query(
@@ -748,7 +767,6 @@ app.post('/api/tickets/mark-read', requireAuth, async (req, res) => {
   }
 });
 
-// Admin Updates Ticket Status & Response (Flags unread_reply = TRUE for User)
 app.post('/api/admin/tickets/:id', requireAdmin, async (req, res) => {
   try {
     const ticketId = req.params.id;
