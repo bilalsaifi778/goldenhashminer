@@ -31,7 +31,6 @@ const DEPOSIT_WALLETS = {
   'USDT-BEP20': process.env.WALLET_BEP20 || '0x71CGoldenHashVaultBEP20DepositAddr992'
 };
 
-// Self-heal schema constraints on startup
 (async () => {
   try {
     await pool.query(`
@@ -76,7 +75,6 @@ app.use('/api/', apiLimiter);
 
 // ==================== LIVE BLOCKCHAIN VERIFIERS ====================
 
-// 1. Verify TRON TRC20 USDT Deposit via TronGrid Public API
 async function verifyTronUsdtDeposit(txHash, expectedRecipient) {
   const cleanHash = txHash.trim().replace(/^0x/i, '');
   const url = `https://api.trongrid.io/v1/transactions/${cleanHash}/events`;
@@ -95,7 +93,6 @@ async function verifyTronUsdtDeposit(txHash, expectedRecipient) {
     throw new Error('Transaction not found or still confirming on TRON network. Wait 1 minute and retry.');
   }
 
-  // Search Transfer events for official USDT TRC20 contract
   for (const ev of json.data) {
     if (
       ev.contract_address === TRC20_USDT_CONTRACT &&
@@ -105,10 +102,8 @@ async function verifyTronUsdtDeposit(txHash, expectedRecipient) {
       const toAddr = ev.result.to || ev.result['1'];
       const rawVal = ev.result.value || ev.result['2'];
 
-      // TronGrid returns hex (41...) or base58 depending on endpoint; check TronScan fallback if hex
       let matchedRecipient = toAddr === expectedRecipient;
       if (!matchedRecipient && toAddr && toAddr.startsWith('0x')) {
-        // Query TronScan public API for Base58 decoded recipient
         const tsRes = await fetch(`https://apilist.tronscanapi.com/api/transaction-info?hash=${cleanHash}`);
         if (tsRes.ok) {
           const tsData = await tsRes.json();
@@ -122,15 +117,13 @@ async function verifyTronUsdtDeposit(txHash, expectedRecipient) {
               t.to_address === expectedRecipient
           );
           if (match) {
-            const amountUsdt = Number(match.amount_str) / 1e6;
-            return { verified: true, amountUsdt };
+            return { verified: true, amountUsdt: Number(match.amount_str) / 1e6 };
           }
         }
       }
 
       if (matchedRecipient && rawVal) {
-        const amountUsdt = Number(rawVal) / 1e6; // TRC20 USDT uses 6 decimals
-        return { verified: true, amountUsdt };
+        return { verified: true, amountUsdt: Number(rawVal) / 1e6 };
       }
     }
   }
@@ -138,7 +131,6 @@ async function verifyTronUsdtDeposit(txHash, expectedRecipient) {
   throw new Error(`No USDT (TRC20) transfer to ${expectedRecipient} found in this TXID.`);
 }
 
-// 2. Verify BNB Smart Chain (BEP20) USDT Deposit via Public BSC RPC
 async function verifyBscUsdtDeposit(txHash, expectedRecipient) {
   const cleanHash = txHash.trim().startsWith('0x') ? txHash.trim() : '0x' + txHash.trim();
 
@@ -178,13 +170,10 @@ async function verifyBscUsdtDeposit(txHash, expectedRecipient) {
       log.topics.length >= 3 &&
       log.topics[0].toLowerCase() === ERC20_TRANSFER_TOPIC
     ) {
-      // topics[2] is 32-byte zero-padded recipient address
       const logRecipient = log.topics[2].toLowerCase().slice(-40);
       if (logRecipient === targetAddrLower) {
         const rawWei = BigInt(log.data);
-        // BEP20 USDT uses 18 decimals
-        const amountUsdt = Number(rawWei) / 1e18;
-        return { verified: true, amountUsdt };
+        return { verified: true, amountUsdt: Number(rawWei) / 1e18 };
       }
     }
   }
@@ -206,7 +195,8 @@ async function generateUniqueIdentifiers() {
   return { publicUid, referralCode };
 }
 
-const BASE_FREE_RATE_PER_GHS_SEC = 0.00000003;
+// Free 50 GH/s starter rig yields 1% daily on a $10 starter baseline ($0.10/day = $0.00000116/sec)
+const FREE_DAILY_PROFIT_USDT = 0.10;
 
 async function calculateMiningState(userId) {
   const userRes = await pool.query('SELECT * FROM users WHERE id = $1', [userId]);
@@ -215,9 +205,8 @@ async function calculateMiningState(userId) {
 
   const now = new Date();
   const freeSeconds = Math.max(0, (now - new Date(user.last_claimed_at)) / 1000);
-  const freeDailyRate = 50 * BASE_FREE_RATE_PER_GHS_SEC * 86400;
-  let unclaimedUsdt = freeSeconds * (50 * BASE_FREE_RATE_PER_GHS_SEC);
-  let totalDailyRate = freeDailyRate;
+  let unclaimedUsdt = freeSeconds * (FREE_DAILY_PROFIT_USDT / 86400);
+  let totalDailyRate = FREE_DAILY_PROFIT_USDT;
 
   const contractsRes = await pool.query(
     `SELECT uc.*, mp.name AS plan_name, mp.tier_badge 
@@ -446,7 +435,6 @@ app.get('/dashboard', requireAuth, async (req, res) => {
     const state = await calculateMiningState(req.session.userId);
     if (!state) return res.redirect('/logout');
 
-    // SELECT DISTINCT ON (name) ensures zero visual duplicates even if DB wasn't truncated yet
     const plansRes = await pool.query(
       `SELECT * FROM (
          SELECT DISTINCT ON (name) * FROM mining_plans WHERE is_active = TRUE ORDER BY name, id ASC
@@ -510,7 +498,7 @@ app.post('/api/mine/claim', requireAuth, async (req, res) => {
     );
 
     await client.query(
-      `INSERT INTO transactions (user_id, type, network, amount_usdt, status) VALUES ($1, 'mine_claim', 'INTERNAL', $2, 'completed')`,
+      `INSERT INTO transactions (user_id, type, network, amount_usdt, status) VALUES ($1, 'mine_claim', 'BTC-POOL', $2, 'completed')`,
       [req.session.userId, state.unclaimedUsdt]
     );
 
@@ -528,6 +516,7 @@ app.post('/api/mine/claim', requireAuth, async (req, res) => {
   }
 });
 
+// Deploy Bitcoin Mining Rig (1% Daily Profit / 30% Monthly Profit over 30 Days)
 app.post('/api/plans/buy', requireAuth, async (req, res) => {
   const { planId } = req.body;
   const client = await pool.connect();
@@ -536,21 +525,24 @@ app.post('/api/plans/buy', requireAuth, async (req, res) => {
     const planRes = await client.query('SELECT * FROM mining_plans WHERE id = $1 AND is_active = TRUE', [planId]);
     if (planRes.rows.length === 0) throw new Error('Plan unavailable');
     const plan = planRes.rows[0];
-    if (parseFloat(plan.price_usdt) <= 0) throw new Error('Free plan is already active');
+    const price = parseFloat(plan.price_usdt);
+    if (price <= 0) throw new Error('Free Starter BTC Rig is already active');
 
     const userRes = await client.query('SELECT * FROM users WHERE id = $1 FOR UPDATE', [req.session.userId]);
     const user = userRes.rows[0];
 
-    if (parseFloat(user.balance_usdt) < parseFloat(plan.price_usdt)) {
+    if (parseFloat(user.balance_usdt) < price) {
       throw new Error('Insufficient USDT balance. Please deposit first.');
     }
 
-    const dailyProfit = (parseFloat(plan.price_usdt) * parseFloat(plan.daily_roi_percent)) / 100;
-    const expiresAt = new Date(Date.now() + plan.duration_days * 24 * 60 * 60 * 1000);
+    // Strict 1.00% daily ROI (30.00% over 30 days)
+    const dailyProfit = (price * 1.0) / 100;
+    const durationDays = parseInt(plan.duration_days) || 30;
+    const expiresAt = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000);
 
     await client.query(
       `UPDATE users SET balance_usdt = balance_usdt - $1, total_hashrate_ghs = total_hashrate_ghs + $2 WHERE id = $3`,
-      [plan.price_usdt, plan.hashrate_ghs, user.id]
+      [price, plan.hashrate_ghs, user.id]
     );
 
     await client.query(
@@ -559,12 +551,12 @@ app.post('/api/plans/buy', requireAuth, async (req, res) => {
     );
 
     await client.query(
-      `INSERT INTO transactions (user_id, type, network, amount_usdt, status) VALUES ($1, 'plan_buy', 'INTERNAL', $2, 'completed')`,
-      [user.id, plan.price_usdt]
+      `INSERT INTO transactions (user_id, type, network, amount_usdt, status) VALUES ($1, 'plan_buy', 'BTC-RIG', $2, 'completed')`,
+      [user.id, price]
     );
 
     if (user.referred_by) {
-      const commission = parseFloat(plan.price_usdt) * 0.1;
+      const commission = price * 0.1;
       await client.query(
         `UPDATE users SET balance_usdt = balance_usdt + $1, referral_earnings = referral_earnings + $1 WHERE id = $2`,
         [commission, user.referred_by]
@@ -576,7 +568,7 @@ app.post('/api/plans/buy', requireAuth, async (req, res) => {
     }
 
     await client.query('COMMIT');
-    res.json({ success: true, message: `${plan.name} deployed and mining!` });
+    res.json({ success: true, message: `${plan.name} deployed! Earning 1% daily (30% monthly).` });
   } catch (err) {
     await client.query('ROLLBACK');
     res.status(400).json({ error: err.message });
@@ -595,13 +587,11 @@ app.post('/api/deposit/verify', requireAuth, async (req, res) => {
   const normalizedHash = txHash.trim().toLowerCase();
 
   try {
-    // 1. Check if TXID was already claimed by any user
     const existing = await pool.query('SELECT id FROM transactions WHERE LOWER(tx_hash) = $1', [normalizedHash]);
     if (existing.rows.length > 0) {
       return res.status(400).json({ error: 'This Transaction Hash (TXID) has already been verified and credited.' });
     }
 
-    // 2. Verify live on-chain depending on selected chain
     let verification;
     if (network === 'USDT-TRC20') {
       verification = await verifyTronUsdtDeposit(txHash.trim(), DEPOSIT_WALLETS['USDT-TRC20']);
@@ -615,7 +605,6 @@ app.post('/api/deposit/verify', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Verified transfer amount must be at least $1.00 USDT.' });
     }
 
-    // 3. Atomically credit exact on-chain USDT amount to the user
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
@@ -719,5 +708,5 @@ app.post('/api/admin/tx/:id', requireAdmin, async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`GoldenHash Miner running on port ${PORT}`);
+  console.log(`Golden Hash Miner running on port ${PORT}`);
 });
