@@ -27,8 +27,8 @@ const ERC20_TRANSFER_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a116
 
 // Receiving Wallets (Replace via Render Environment Variables later)
 const DEPOSIT_WALLETS = {
-  'USDT-TRC20': process.env.WALLET_TRC20 || 'TX9kGoldenHashVaultTRC20DepositAddr889',
-  'USDT-BEP20': process.env.WALLET_BEP20 || '0x71CGoldenHashVaultBEP20DepositAddr992'
+  'USDT-BEP20': process.env.WALLET_BEP20 || '0x71CGoldenHashVaultBEP20DepositAddr992',
+  'USDT-TRC20': process.env.WALLET_TRC20 || 'TX9kGoldenHashVaultTRC20DepositAddr889'
 };
 
 (async () => {
@@ -134,7 +134,7 @@ async function verifyTronUsdtDeposit(txHash, expectedRecipient) {
 async function verifyBscUsdtDeposit(txHash, expectedRecipient) {
   const cleanHash = txHash.trim().startsWith('0x') ? txHash.trim() : '0x' + txHash.trim();
 
-  const rpcRes = await fetch('https://bsc-dataseed.binance.org/', {
+  const rpcRes = await fetch('https://bsc-dataseed.bnbchain.org/', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -195,7 +195,6 @@ async function generateUniqueIdentifiers() {
   return { publicUid, referralCode };
 }
 
-// Free 50 GH/s starter rig yields 1% daily on a $10 starter baseline ($0.10/day = $0.00000116/sec)
 const FREE_DAILY_PROFIT_USDT = 0.10;
 
 async function calculateMiningState(userId) {
@@ -516,7 +515,6 @@ app.post('/api/mine/claim', requireAuth, async (req, res) => {
   }
 });
 
-// Deploy Bitcoin Mining Rig (1% Daily Profit / 30% Monthly Profit over 30 Days)
 app.post('/api/plans/buy', requireAuth, async (req, res) => {
   const { planId } = req.body;
   const client = await pool.connect();
@@ -526,7 +524,7 @@ app.post('/api/plans/buy', requireAuth, async (req, res) => {
     if (planRes.rows.length === 0) throw new Error('Plan unavailable');
     const plan = planRes.rows[0];
     const price = parseFloat(plan.price_usdt);
-    if (price <= 0) throw new Error('Free Starter BTC Rig is already active');
+    if (price <= 0) throw new Error('Invalid plan price');
 
     const userRes = await client.query('SELECT * FROM users WHERE id = $1 FOR UPDATE', [req.session.userId]);
     const user = userRes.rows[0];
@@ -535,7 +533,6 @@ app.post('/api/plans/buy', requireAuth, async (req, res) => {
       throw new Error('Insufficient USDT balance. Please deposit first.');
     }
 
-    // Strict 1.00% daily ROI (30.00% over 30 days)
     const dailyProfit = (price * 1.0) / 100;
     const durationDays = parseInt(plan.duration_days) || 30;
     const expiresAt = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000);
@@ -577,7 +574,6 @@ app.post('/api/plans/buy', requireAuth, async (req, res) => {
   }
 });
 
-// LIVE ON-CHAIN USDT DEPOSIT VERIFICATION (TRC20 & BEP20)
 app.post('/api/deposit/verify', requireAuth, async (req, res) => {
   const { network, txHash } = req.body;
   if (!txHash || txHash.trim().length < 20) {
@@ -593,10 +589,10 @@ app.post('/api/deposit/verify', requireAuth, async (req, res) => {
     }
 
     let verification;
-    if (network === 'USDT-TRC20') {
-      verification = await verifyTronUsdtDeposit(txHash.trim(), DEPOSIT_WALLETS['USDT-TRC20']);
-    } else if (network === 'USDT-BEP20') {
+    if (network === 'USDT-BEP20') {
       verification = await verifyBscUsdtDeposit(txHash.trim(), DEPOSIT_WALLETS['USDT-BEP20']);
+    } else if (network === 'USDT-TRC20') {
+      verification = await verifyTronUsdtDeposit(txHash.trim(), DEPOSIT_WALLETS['USDT-TRC20']);
     } else {
       return res.status(400).json({ error: 'Unsupported network selected.' });
     }
