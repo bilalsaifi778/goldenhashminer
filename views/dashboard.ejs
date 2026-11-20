@@ -79,7 +79,6 @@
       </div>
 
       <div class="flex items-center gap-3">
-        <!-- User Profile & 6-Digit UID -->
         <div class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-slate-200/80 dark:bg-slate-800/90 border border-slate-300/60 dark:border-slate-700/60">
           <% if (user.avatar_url) { %>
             <img src="<%= user.avatar_url %>" alt="Avatar" class="w-6 h-6 rounded-full object-cover border border-amber-400" />
@@ -94,7 +93,6 @@
           </div>
         </div>
 
-        <!-- Theme Toggle Button -->
         <button id="theme-toggle" class="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-amber-500/20 flex items-center justify-center transition" title="Toggle Dark/Light Theme">
           <i id="theme-icon" class="fa-solid fa-sun text-amber-400"></i>
         </button>
@@ -209,7 +207,7 @@
       </div>
     </section>
 
-    <!-- Cloud Gold Mining Packages -->
+    <!-- Cloud Gold Mining Packages (8 Unique Tiers) -->
     <section>
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
         <div>
@@ -220,11 +218,12 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <% plans.forEach(plan => { 
           const dailyEarn = (parseFloat(plan.price_usdt) * parseFloat(plan.daily_roi_percent) / 100);
+          const isHighlighted = plan.tier_badge === 'POPULAR' || plan.tier_badge === 'WHALE VIP';
         %>
-          <div class="card-3d bg-white dark:bg-slate-900 border <%= plan.tier_badge === 'POPULAR' ? 'border-amber-500 ring-2 ring-amber-500/25' : 'border-slate-200 dark:border-slate-800' %> rounded-2xl p-5 flex flex-col justify-between">
+          <div class="card-3d bg-white dark:bg-slate-900 border <%= isHighlighted ? 'border-amber-500 ring-2 ring-amber-500/25' : 'border-slate-200 dark:border-slate-800' %> rounded-2xl p-5 flex flex-col justify-between">
             <div>
               <div class="flex items-center justify-between mb-3">
                 <span class="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/30">
@@ -234,7 +233,7 @@
               </div>
               <h3 class="font-bold text-base"><%= plan.name %></h3>
               <div class="mt-2 text-2xl font-extrabold mono text-slate-900 dark:text-white">
-                <%= parseFloat(plan.price_usdt) === 0 ? 'FREE' : '$' + parseFloat(plan.price_usdt).toFixed(2) %>
+                <%= parseFloat(plan.price_usdt) === 0 ? 'FREE' : '$' + parseFloat(plan.price_usdt).toLocaleString('en-US', { minimumFractionDigits: 2 }) %>
               </div>
               <ul class="mt-4 space-y-2.5 text-xs text-slate-600 dark:text-slate-300 border-t border-slate-200 dark:border-slate-800 pt-3.5">
                 <li class="flex justify-between">
@@ -292,11 +291,11 @@
         <div class="mt-3 grid grid-cols-2 gap-4 items-center">
           <div>
             <label class="text-xs text-slate-500 dark:text-slate-400">Contract Deposit (USDT)</label>
-            <input type="number" id="calc-amount" value="250" min="15" oninput="updateCalc()" class="mt-1 w-full px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 mono font-bold text-sm outline-none" />
+            <input type="number" id="calc-amount" value="500" min="15" oninput="updateCalc()" class="mt-1 w-full px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 mono font-bold text-sm outline-none" />
           </div>
           <div class="bg-slate-100 dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
-            <div class="text-[11px] text-slate-400">Est. 30-Day Return (6.4% Daily)</div>
-            <div class="text-lg font-extrabold mono text-emerald-500" id="calc-output">$480.00 USDT</div>
+            <div class="text-[11px] text-slate-400">Est. 35-Day Return (7.0% Daily)</div>
+            <div class="text-lg font-extrabold mono text-emerald-500" id="calc-output">$1,225.00 USDT</div>
           </div>
         </div>
       </div>
@@ -311,7 +310,7 @@
         </h3>
       </div>
       <% if (adminPendingTx.length === 0) { %>
-        <p class="text-xs text-slate-400">No pending deposits or withdrawals awaiting review.</p>
+        <p class="text-xs text-slate-400">No pending withdrawals awaiting review.</p>
       <% } else { %>
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs">
@@ -387,39 +386,50 @@
     </section>
   </main>
 
-  <!-- DEPOSIT MODAL -->
+  <!-- LIVE ON-CHAIN DEPOSIT MODAL (TRC20 & BEP20) -->
   <div id="deposit-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl">
       <div class="flex items-center justify-between mb-4">
-        <h3 class="font-extrabold text-lg"><i class="fa-solid fa-circle-arrow-down text-amber-500 mr-2"></i>Deposit USDT</h3>
+        <h3 class="font-extrabold text-lg flex items-center gap-2">
+          <i class="fa-solid fa-circle-check text-emerald-500"></i> Instant Blockchain USDT Deposit
+        </h3>
         <button onclick="closeModal('deposit-modal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
+
+      <!-- Live Verification Result Box -->
+      <div id="deposit-result-box" class="hidden mb-4 p-4 rounded-xl border text-xs"></div>
+
       <div class="space-y-4 text-xs">
         <div>
-          <label class="font-semibold text-slate-400">Select Network</label>
-          <select id="dep-network" onchange="updateDepositAddress()" class="mt-1 w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 font-semibold outline-none">
-            <option value="USDT-TRC20">USDT (TRC20 - Tron)</option>
-            <option value="USDT-BEP20">USDT (BEP20 - BSC)</option>
-            <option value="BTC">Bitcoin (BTC)</option>
+          <label class="font-semibold text-slate-400">1. Select Blockchain Network</label>
+          <select id="dep-network" onchange="updateDepositAddress()" class="mt-1 w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 font-bold outline-none">
+            <option value="USDT-TRC20">USDT — TRON Network (TRC20)</option>
+            <option value="USDT-BEP20">USDT — BNB Smart Chain (BEP20)</option>
           </select>
         </div>
-        <div class="p-3 rounded-xl bg-slate-100 dark:bg-slate-950 border border-amber-500/30">
-          <div class="text-[11px] text-slate-400 mb-1">Official Vault Deposit Address:</div>
+
+        <div class="p-3.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-amber-500/30">
+          <div class="flex items-center justify-between text-[11px] text-slate-400 mb-1.5">
+            <span>2. Send USDT to Official Vault Address:</span>
+            <span class="text-amber-500 font-bold">Auto-Detected</span>
+          </div>
           <div class="flex items-center justify-between gap-2">
-            <code id="vault-address" class="mono text-[11px] text-amber-500 break-all"><%= depositWallets['USDT-TRC20'] %></code>
-            <button onclick="copyVault()" class="px-2.5 py-1 rounded bg-amber-500 text-slate-950 font-bold shrink-0">Copy</button>
+            <code id="vault-address" class="mono text-[11px] text-amber-500 break-all font-bold"><%= depositWallets['USDT-TRC20'] %></code>
+            <button type="button" onclick="copyVault()" class="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold shrink-0">Copy</button>
           </div>
         </div>
+
         <div>
-          <label class="font-semibold text-slate-400">Amount Sent (Min $5.00)</label>
-          <input type="number" id="dep-amount" placeholder="50.00" min="5" class="mt-1 w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 mono outline-none" />
+          <label class="font-semibold text-slate-400">3. Paste Blockchain Transaction Hash (TXID)</label>
+          <input type="text" id="dep-txhash" placeholder="e.g. 0x9f8b... or 7a3d... (64-char TXID)" class="mt-1 w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 mono outline-none focus:border-amber-500" />
+          <p class="mt-1 text-[11px] text-slate-400">
+            <i class="fa-solid fa-bolt text-amber-500 mr-1"></i>Our node verifies the exact USDT amount on-chain and credits UID <strong class="mono text-slate-200">#<%= user.public_uid %></strong> automatically.
+          </p>
         </div>
-        <div>
-          <label class="font-semibold text-slate-400">Transaction Hash (TXID)</label>
-          <input type="text" id="dep-txhash" placeholder="Paste blockchain TXID here..." class="mt-1 w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 mono outline-none" />
-        </div>
-        <button onclick="submitDeposit()" class="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-sm transition">
-          Confirm Deposit Submission
+
+        <button type="button" id="verify-dep-btn" onclick="verifyLiveDeposit()" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-extrabold text-sm transition flex items-center justify-center gap-2 shadow-lg">
+          <i class="fa-solid fa-magnifying-glass-dollar"></i>
+          <span>Verify On-Chain & Credit Instantly</span>
         </button>
       </div>
     </div>
@@ -467,7 +477,7 @@
       counterEl.textContent = '$' + unclaimed.toFixed(8);
     }, 100);
 
-    // 2. Live BTC Price Fetch (CoinGecko Public API)
+    // 2. Live BTC & Gold Price Fetch
     fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,pax-gold&vs_currencies=usd')
       .then(r => r.json())
       .then(d => {
@@ -497,7 +507,7 @@
         isError ? 'bg-rose-950 border-rose-500 text-rose-200' : 'bg-emerald-950 border-emerald-500 text-emerald-200'
       }`;
       t.classList.remove('hidden');
-      setTimeout(() => t.classList.add('hidden'), 3500);
+      setTimeout(() => t.classList.add('hidden'), 4000);
     }
 
     async function claimMined() {
@@ -549,27 +559,60 @@
     }
     function updateCalc() {
       const val = parseFloat(document.getElementById('calc-amount').value) || 0;
-      document.getElementById('calc-output').textContent = '$' + (val * 1.92).toFixed(2) + ' USDT';
+      document.getElementById('calc-output').textContent = '$' + (val * 2.45).toFixed(2) + ' USDT';
     }
     function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
-    async function submitDeposit() {
-      const payload = {
-        network: document.getElementById('dep-network').value,
-        amount: document.getElementById('dep-amount').value,
-        txHash: document.getElementById('dep-txhash').value
-      };
-      const res = await fetch('/api/deposit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const data = await res.json();
-      if (!res.ok) return showToast(data.error, true);
-      closeModal('deposit-modal');
-      showToast(data.message);
-      setTimeout(() => location.reload(), 1000);
+    // Live Blockchain Verification Handler
+    async function verifyLiveDeposit() {
+      const btn = document.getElementById('verify-dep-btn');
+      const resultBox = document.getElementById('deposit-result-box');
+      const network = document.getElementById('dep-network').value;
+      const txHash = document.getElementById('dep-txhash').value.trim();
+
+      if (!txHash) {
+        return showToast('Please paste your blockchain TXID first.', true);
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Scanning Blockchain...</span>';
+      resultBox.classList.add('hidden');
+
+      try {
+        const res = await fetch('/api/deposit/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ network, txHash })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          resultBox.className = 'mb-4 p-3.5 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-300 text-xs font-medium';
+          resultBox.innerHTML = `<i class="fa-solid fa-circle-xmark mr-1.5 text-rose-400"></i>${data.error}`;
+          resultBox.classList.remove('hidden');
+          return;
+        }
+
+        // Success: Show credited amount and user ID
+        document.getElementById('wallet-balance').textContent = '$' + data.newBalance.toFixed(4);
+        resultBox.className = 'mb-4 p-4 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-200 text-xs space-y-1';
+        resultBox.innerHTML = `
+          <div class="font-extrabold text-emerald-400 text-sm flex items-center gap-1.5">
+            <i class="fa-solid fa-circle-check"></i> Blockchain Deposit Confirmed!
+          </div>
+          <div>Credited Amount: <strong class="mono text-white">$${data.creditedAmount.toFixed(2)} USDT</strong> (${data.network})</div>
+          <div>Credited to User ID: <strong class="mono text-amber-300">#${data.publicUid}</strong></div>
+        `;
+        resultBox.classList.remove('hidden');
+        document.getElementById('dep-txhash').value = '';
+        showToast(`+$${data.creditedAmount.toFixed(2)} USDT credited to UID #${data.publicUid}!`);
+      } catch (err) {
+        showToast('Network error verifying transaction.', true);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-magnifying-glass-dollar"></i><span>Verify On-Chain & Credit Instantly</span>';
+      }
     }
 
     async function submitWithdraw() {
