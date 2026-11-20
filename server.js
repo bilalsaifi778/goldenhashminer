@@ -702,7 +702,7 @@ app.post('/api/withdraw', requireAuth, async (req, res) => {
   const client = await pool.connect();
 
   try {
-    if (!parsedAmount || parsedAmount < 5) throw new Error('Minimum withdrawal is $5.00 USDT');
+    if (!parsedAmount || parsedAmount < 10) throw new Error('Minimum withdrawal is $10.00 USDT');
     if (!walletAddress || walletAddress.trim().length < 12) throw new Error('Enter a valid destination wallet address');
 
     await client.query('BEGIN');
